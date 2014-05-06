@@ -24,6 +24,8 @@ import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.IOException;
 
+import org.json.simple.*;
+import org.json.simple.parser.ParseException;
 import org.lwjgl.opengl.GL11;
 
 public class Screen {
@@ -56,14 +58,14 @@ class MyPanel extends JPanel {
 	public JButton Open;
 	public JComboBox SN;
 	public JButton Reset;
-	public JCheckBox AO;
 
 	public JOptionPane er;
 
 	public int sn;
 	public int m;
 	public int edUV=1;
-	public boolean ao;
+
+	public boolean ao,OSX,OSY,OSZ,KRot,Rend3D;
 
 	public final JFileChooser fc = new JFileChooser();
 
@@ -88,19 +90,15 @@ class MyPanel extends JPanel {
 	public MyPanel() {
 		setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
-		
+
 		fc.setAcceptAllFileFilterUsed(false);
 		fc.addChoosableFileFilter(new FileNameExtensionFilter("Json Files (*.json)", "json"));
 		//fc.addChoosableFileFilter(new FileNameExtensionFilter("STL Files (*.stl)", "stl"));
 		//fc.setAcceptAllFileFilterUsed(true);
 
-		AO = new JCheckBox("Ambient Occlusion");
-		AO.setLocation(800, 65);
-		add(AO);
-
 		Open = new JButton("Open");
 		Open.setToolTipText("Open an existing .json file.");
-		//add(Open);
+		add(Open);
 
 		Save=new JButton("Export/Save");
 		Save.setToolTipText("Save and Export your current model.");
@@ -131,7 +129,6 @@ class MyPanel extends JPanel {
 		TM.addActionListener(h);
 		Save.addActionListener(h);
 		Open.addActionListener(h);
-		AO.addItemListener(h);
 
 		addMouseListener(h);
 		addMouseMotionListener(h);
@@ -163,40 +160,42 @@ class MyPanel extends JPanel {
 		}
 
 		int ux1,uy1,ux12,uy12;
-		ux1=UVC0[edUV*sn*2];
-		uy1=UVC0[edUV*sn*2+1];
-		ux12=UVC02[edUV*sn*2];
-		uy12=UVC02[edUV*sn*2+1];
+		ux1=UVC0[sn*2];
+		uy1=UVC0[sn*2+1];
+		ux12=UVC02[sn*2];
+		uy12=UVC02[sn*2+1];
 
 		int ux2,uy2,ux22,uy22;
-		ux2=UVC1[edUV*sn*2];
-		uy2=UVC1[edUV*sn*2+1];
-		ux22=UVC12[edUV*sn*2];
-		uy22=UVC12[edUV*sn*2+1];
+		ux2=UVC1[sn*2];
+		uy2=UVC1[sn*2+1];
+		ux22=UVC12[sn*2];
+		uy22=UVC12[sn*2+1];
 
 		int ux3,uy3,ux32,uy32;
-		ux3=UVC2[edUV*sn*2];
-		uy3=UVC2[edUV*sn*2+1];
-		ux32=UVC22[edUV*sn*2];
-		uy32=UVC22[edUV*sn*2+1];
+		ux3=UVC2[sn*2];
+		uy3=UVC2[sn*2+1];
+		ux32=UVC22[sn*2];
+		uy32=UVC22[sn*2+1];
 
 		int ux4,uy4,ux42,uy42;
-		ux4=UVC3[edUV*sn*2];
-		uy4=UVC3[edUV*sn*2+1];
-		ux42=UVC32[edUV*sn*2];
-		uy42=UVC32[edUV*sn*2+1];
+		ux4=UVC3[sn*2];
+		uy4=UVC3[sn*2+1];
+		ux42=UVC32[sn*2];
+		uy42=UVC32[sn*2+1];
 
 		int ux5,uy5,ux52,uy52;
-		ux5=UVC4[edUV*sn*2];
-		uy5=UVC4[edUV*sn*2+1];
-		ux52=UVC42[edUV*sn*2];
-		uy52=UVC42[edUV*sn*2+1];
+		ux5=UVC4[sn*2];
+		uy5=UVC4[sn*2+1];
+		ux52=UVC42[sn*2];
+		uy52=UVC42[sn*2+1];
 
 		int ux6,uy6,ux62,uy62;
-		ux6=UVC5[edUV*sn*2];
-		uy6=UVC5[edUV*sn*2+1];
-		ux62=UVC52[edUV*sn*2];
-		uy62=UVC52[edUV*sn*2+1];
+		ux6=UVC5[sn*2];
+		uy6=UVC5[sn*2+1];
+		ux62=UVC52[sn*2];
+		uy62=UVC52[sn*2+1];
+
+		g.setColor(Color.BLACK);
 
 		g.drawString("Info for Voxel and UV set:" + sn,10,50);
 		g.drawString("From[X:"+x+",Y:"+y+",Z:"+z+"]", 10, 65);
@@ -208,6 +207,76 @@ class MyPanel extends JPanel {
 		g.drawString("Back:[ "+ux4+", "+uy4+", "+ux42+", "+uy42+" ]", 10, 170);
 		g.drawString("Left:[ "+ux5+", "+uy5+", "+ux52+", "+uy52+" ]", 10, 185);
 		g.drawString("Right:[ "+ux6+", "+uy6+", "+ux62+", "+uy62+" ]", 10, 200);
+
+		g.drawString("Model Options", 65, 250);
+		if(ao==true){
+			g.setColor(Color.GREEN);
+		}
+		if(ao==false){
+			g.setColor(Color.RED);
+		}
+		g.fillRoundRect(8, 252, 100, 15,5,5);
+		g.setColor(Color.BLACK);
+		g.drawString("Anti-Occlusion", 10, 265);
+		g.drawRoundRect(8, 252, 100, 15,5,5);
+
+		g.setColor(Color.BLACK);
+		g.drawString("Random Offset:", 10, 280);
+
+		if(OSX==true){
+			g.setColor(Color.GREEN);
+		}
+		if(OSX==false){
+			g.setColor(Color.RED);
+		}
+		g.fillRoundRect(23, 282, 40, 15,5,5);
+		g.setColor(Color.BLACK);
+		g.drawString("    X", 25, 295);
+		g.drawRoundRect(23, 282, 40, 15,5,5);
+
+		if(OSY==true){
+			g.setColor(Color.GREEN);
+		}
+		if(OSY==false){
+			g.setColor(Color.RED);
+		}
+		g.fillRoundRect(23, 297, 40, 15,5,5);
+		g.setColor(Color.BLACK);
+		g.drawString("    Y", 25, 310);
+		g.drawRoundRect(23, 297, 40, 15,5,5);
+
+		if(OSZ==true){
+			g.setColor(Color.GREEN);
+		}
+		if(OSZ==false){
+			g.setColor(Color.RED);
+		}
+		g.fillRoundRect(23, 312, 40, 15,5,5);
+		g.setColor(Color.BLACK);
+		g.drawString("    Z", 25, 325);
+		g.drawRoundRect(23, 312, 40, 15,5,5);
+
+		if(KRot==true){
+			g.setColor(Color.GREEN);
+		}
+		if(KRot==false){
+			g.setColor(Color.RED);
+		}
+		g.fillRoundRect(8, 327, 150, 15,5,5);
+		g.setColor(Color.BLACK);
+		g.drawString("Rotate Variant Textures", 10, 340);
+		g.drawRoundRect(8, 327, 150, 15,5,5);
+
+		if(Rend3D==true){
+			g.setColor(Color.GREEN);
+		}
+		if(Rend3D==false){
+			g.setColor(Color.RED);
+		}
+		g.fillRoundRect(8, 342, 150, 15,5,5);
+		g.setColor(Color.BLACK);
+		g.drawString("Render 3D in inventory", 10, 355);
+		g.drawRoundRect(8, 342, 150, 15,5,5);
 
 		if(m==1){ // Check if in UV Editor
 			g.setColor(Color.GREEN);
@@ -434,7 +503,7 @@ class MyPanel extends JPanel {
 			g.fillRect(496, 77, 9, 9);
 			g.fillRect(496, 327, 9, 9);
 			g.fillRect(746, 327, 9, 9);
-			g.fillRect(346, 227, 9, 9);//---
+			g.fillRect(346, 227, 9, 9);
 			g.fillRect(346, 477, 9, 9);
 			g.fillRect(596, 477, 9, 9);
 			g.fillRect(496, 227, 9, 9);
@@ -484,7 +553,7 @@ class MyPanel extends JPanel {
 	}
 
 
-	private class Handler implements ActionListener,MouseListener,MouseMotionListener,ItemListener{
+	private class Handler implements ActionListener,MouseListener,MouseMotionListener{
 
 		public void actionPerformed(ActionEvent event) {
 			if(TM==event.getSource()){
@@ -502,24 +571,24 @@ class MyPanel extends JPanel {
 				Writer w = new Writer();
 				Export ex = new Export();
 
-				ex.export(ao,VC, VC2,UVC0,UVC02,UVC1,UVC12,UVC2,UVC22,UVC3,UVC32,UVC4,UVC42,UVC5,UVC52);
+				ex.export(ao,VC, VC2,UVC0,UVC02,UVC1,UVC12,UVC2,UVC22,UVC3,UVC32,UVC4,UVC42,UVC5,UVC52,OSX,OSY,OSZ,KRot,Rend3D);
 				String contents = ex.export;
 				int acFc = fc.showSaveDialog(MyPanel.this);
 				if(acFc == fc.APPROVE_OPTION){
 
 					File otherFile = new File(fc.getSelectedFile().getPath()+".json");
-					
+
 					File file = fc.getSelectedFile();
 					String filename=file.getPath();
 					if(w.getExtension(file)!=null){
 						System.out.println(w.getExtension(file));
 						int extPos = file.getPath().lastIndexOf(".");
-						  if(extPos == -1) {
-						    filename = file.getPath();
-						  }
-						  else {
-						    filename = file.getPath().substring(0, extPos);
-						  }
+						if(extPos == -1) {
+							filename = file.getPath();
+						}
+						else {
+							filename = file.getPath().substring(0, extPos);
+						}
 					}
 					File anotherFile=new File(filename+".json");
 
@@ -535,23 +604,42 @@ class MyPanel extends JPanel {
 						w.Write(fc.getSelectedFile(), contents);
 						er.showMessageDialog(MyPanel.this, "Succesfully saved!","Success",JOptionPane.INFORMATION_MESSAGE);
 					}
-
-					//Viewer.run();
 				}
 			}
 
 			if(Open==event.getSource()){
+				Writer w = new Writer();
+
+				fc.setAcceptAllFileFilterUsed(false);
+
 				int acFc = fc.showOpenDialog(MyPanel.this);
 				if(acFc == fc.APPROVE_OPTION){
 					System.out.println(fc.getSelectedFile());
 					Import i = new Import();
-					/*try {
-						String importString = i.getValueFromFile(fc.getSelectedFile());
-						System.out.println(importString);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}*/
-					
+					int opt = er.showConfirmDialog(MyPanel.this, "Are you sure you want to open this file?\nYour current progress will be lost","Warning!",JOptionPane.WARNING_MESSAGE);
+					if(opt==0){
+						try {
+
+							ao=i.getAO(fc.getSelectedFile());
+							OSX=i.getOSX(fc.getSelectedFile());
+							OSY=i.getOSY(fc.getSelectedFile());
+							OSZ=i.getOSZ(fc.getSelectedFile());
+							KRot=i.getKRot(fc.getSelectedFile());
+							Rend3D=i.getRend3D(fc.getSelectedFile());
+
+							VC=i.getVC(fc.getSelectedFile());
+							VC2=i.getVC2(fc.getSelectedFile());
+
+							er.showMessageDialog(MyPanel.this, "This file seems to have opened correctly!","Success",JOptionPane.INFORMATION_MESSAGE);
+
+						} catch (IOException e) {
+							e.printStackTrace();
+							er.showMessageDialog(MyPanel.this, "Load corrupted\nIOException:"+e,"Error",JOptionPane.ERROR_MESSAGE);
+						} catch (ParseException e) {
+							e.printStackTrace();
+							er.showMessageDialog(MyPanel.this, "Load corrupted\nParseException:"+e,"Error",JOptionPane.ERROR_MESSAGE);
+						}
+					}
 				}
 			}
 
@@ -567,6 +655,56 @@ class MyPanel extends JPanel {
 
 		public void mouseClicked(MouseEvent event) {
 			System.out.println(event.getX() + ":"+event.getY());
+
+			if(event.getX()>=10 && event.getX()<= 110 && event.getY()>=255 && event.getY() <= 265){
+				if(ao==true){
+					ao=false;
+				}
+				else if(ao==false){
+					ao=true;
+				}
+			}
+
+			if(event.getX()>=20 && event.getX()<= 65 && event.getY()>=285 && event.getY() <= 295){
+				if(OSX==true){
+					OSX=false;
+				}
+				else if(OSX==false){
+					OSX=true;
+				}
+			}
+			if(event.getX()>=20 && event.getX()<= 65 && event.getY()>=300 && event.getY() <= 315){
+				if(OSY==true){
+					OSY=false;
+				}
+				else if(OSY==false){
+					OSY=true;
+				}
+			}
+			if(event.getX()>=20 && event.getX()<= 65 && event.getY()>=315 && event.getY() <= 330){
+				if(OSZ==true){
+					OSZ=false;
+				}
+				else if(OSZ==false){
+					OSZ=true;
+				}
+			}
+			if(event.getX()>=10 && event.getX()<= 175 && event.getY()>=330 && event.getY() <= 344){
+				if(KRot==true){
+					KRot=false;
+				}
+				else if(KRot==false){
+					KRot=true;
+				}
+			}
+			if(event.getX()>=10 && event.getX()<= 170 && event.getY()>=345 && event.getY() <= 355){
+				if(Rend3D==true){
+					Rend3D=false;
+				}
+				else if(Rend3D==false){
+					Rend3D=true;
+				}
+			}
 		}
 
 		public void mouseEntered(MouseEvent event) {
@@ -592,23 +730,23 @@ class MyPanel extends JPanel {
 			}else{
 				if(event.getX()>=306 && event.getX()<=304+16*21 && event.getY()>=36 && event.getY()<=34+16*21){
 					if(edUV==1){
-						UVC0[edUV*sn*2]=(event.getX()-305)/20;
-						UVC0[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC0[sn*2]=(event.getX()-305)/20;
+						UVC0[sn*2+1]=(event.getY()-35)/20;
 					}else if(edUV==2){
-						UVC1[edUV*sn*2]=(event.getX()-305)/20;
-						UVC1[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC1[sn*2]=(event.getX()-305)/20;
+						UVC1[sn*2+1]=(event.getY()-35)/20;
 					}else if(edUV==3){
-						UVC2[edUV*sn*2]=(event.getX()-305)/20;
-						UVC2[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC2[sn*2]=(event.getX()-305)/20;
+						UVC2[sn*2+1]=(event.getY()-35)/20;
 					}else if(edUV==4){
-						UVC3[edUV*sn*2]=(event.getX()-305)/20;
-						UVC3[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC3[sn*2]=(event.getX()-305)/20;
+						UVC3[sn*2+1]=(event.getY()-35)/20;
 					}else if(edUV==5){
-						UVC4[edUV*sn*2]=(event.getX()-305)/20;
-						UVC4[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC4[sn*2]=(event.getX()-305)/20;
+						UVC4[sn*2+1]=(event.getY()-35)/20;
 					}else if(edUV==6){
-						UVC5[edUV*sn*2]=(event.getX()-305)/20;
-						UVC5[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC5[sn*2]=(event.getX()-305)/20;
+						UVC5[sn*2+1]=(event.getY()-35)/20;
 					}
 				}
 
@@ -649,38 +787,29 @@ class MyPanel extends JPanel {
 			}else{
 				if(event.getX()>=306 && event.getX()<=304+16*21 && event.getY()>=36 && event.getY()<=34+16*21){
 					if(edUV==1){
-						UVC02[edUV*sn*2]=(event.getX()-305)/20;
-						UVC02[edUV*sn*2+1]=(event.getY()-35)/20;}
+						UVC02[sn*2]=(event.getX()-305)/20;
+						UVC02[sn*2+1]=(event.getY()-35)/20;}
 					else if(edUV==2){
-						UVC12[edUV*sn*2]=(event.getX()-305)/20;
-						UVC12[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC12[sn*2]=(event.getX()-305)/20;
+						UVC12[sn*2+1]=(event.getY()-35)/20;
 					}else if(edUV==3){
-						UVC22[edUV*sn*2]=(event.getX()-305)/20;
-						UVC22[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC22[sn*2]=(event.getX()-305)/20;
+						UVC22[sn*2+1]=(event.getY()-35)/20;
 					}else if(edUV==4){
-						UVC32[edUV*sn*2]=(event.getX()-305)/20;
-						UVC32[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC32[sn*2]=(event.getX()-305)/20;
+						UVC32[sn*2+1]=(event.getY()-35)/20;
 					}else if(edUV==5){
-						UVC42[edUV*sn*2]=(event.getX()-305)/20;
-						UVC42[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC42[sn*2]=(event.getX()-305)/20;
+						UVC42[sn*2+1]=(event.getY()-35)/20;
 					}else if(edUV==6){
-						UVC52[edUV*sn*2]=(event.getX()-305)/20;
-						UVC52[edUV*sn*2+1]=(event.getY()-35)/20;
+						UVC52[sn*2]=(event.getX()-305)/20;
+						UVC52[sn*2+1]=(event.getY()-35)/20;
 					}
 				}
 			}
 		}
 
 		public void mouseMoved(MouseEvent event) {
-		}
-
-		public void itemStateChanged(ItemEvent event) {
-			if(AO==event.getSource()&&AO.isSelected()){
-				ao=true;
-				System.out.println("ao="+ao);
-			}else{
-				ao=false;
-			}
 		}
 	}
 }

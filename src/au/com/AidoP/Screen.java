@@ -1,19 +1,12 @@
 package au.com.AidoP;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.BorderFactory;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.filechooser.FileView;
-import javax.swing.text.html.ImageView;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -21,795 +14,797 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.io.File;
-import java.io.IOException;
+import java.net.*;
 
-import org.json.simple.*;
-import org.json.simple.parser.ParseException;
-import org.lwjgl.opengl.GL11;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 
-public class Screen {
+import au.com.AidoP.Export.Prepare;
+import au.com.AidoP.UV.Back;
+import au.com.AidoP.UV.Bottom;
+import au.com.AidoP.UV.Front;
+import au.com.AidoP.UV.Left;
+import au.com.AidoP.UV.Right;
+import au.com.AidoP.UV.Top;
+import au.com.AidoP.Voxels.X;
+import au.com.AidoP.Voxels.Y;
+import au.com.AidoP.Voxels.Z;
+import au.com.AidoP.Other.OptionData;
 
-	public static void main(String[] args) {
+public class Screen{
+
+	public static void main(String[] args){
+
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				createAndShowGUI(); 
+				createAndShowGUI();
 			}
 		});
 	}
 
-	private static void createAndShowGUI() {
-		JFrame f = new JFrame("MC Model Maker - By AidoP");
+
+	private static void createAndShowGUI(){
+		JFrame f =new JFrame("MC Model Maker - " + getSplash((int)(Math.random()*10)));
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		f.setResizable(false);
-		f.add(new MyPanel());
+		f.add(new Panel());
 		f.pack();
 		f.setVisible(true);
+	}
 
 
-	} 
+	private static String getSplash(int i) {
+		String splash = "Yay! An Easter Egg!";
+		if(i==0)splash = "Well, this is new!";
+		else if(i==1)splash = "With a cherry on top!";
+		else if(i==2)splash = "This. Question. Is. False!";
+		else if(i==3)splash = "Don't make lemonade!";
+		else if(i==4)splash = "Auf Wiedersehen!";
+		else if(i==5)splash = "With the low price of $99!";
+		else if(i==6)splash = "Made with love!";
+		else if(i==7)splash = "10010111010010101010010101";
+		else if(i==8)splash = "Now with 100% more Voxels!*";
+		else if(i==9)splash = "0 is the new 1";
+		else if(i==10)splash = "Now you see me, now you don't!";
+		else splash = "I'm a bug! Squish me!";
+		return splash;
+	}
 }
 
-class MyPanel extends JPanel {
+class Panel extends JPanel{
+
+	//Initialise Voxels and UV Data--
+
+	X XData = new X();
+	Y YData = new Y();
+	Z ZData = new Z();
+	//----------------
+	Front NorthData = new Front();    //North
+	Back SouthData = new Back();      //South
+	Left WestData = new Left();       //West
+	Right EastData = new Right();     //East
+	Top TopData = new Top();          //Top
+	Bottom BottomData = new Bottom(); //Bottom
+
+	OptionData OptionData = new OptionData();
+	//End init of Voxels and UV Data--
+
+	//Initialise Other Values--
+
+	ImageIcon icon = new ImageIcon(getClass().getResource("/res/Icon.png"));
+
+	Prepare PrepareExport = new Prepare();
+
+	boolean DevMode = false;
+
+	int VoxEditing = 0;
+	int FaceEditing = 0;
+
+	int mouseX = 0, mouseY = 0;
+
+	final int VOXEL = 0;
+	final int UV = 1;
+
+	final int NORTH = 0;
+	final int SOUTH = 1;
+	final int EAST = 2;
+	final int WEST = 3;
+	final int TOP = 4;
+	final int BOTTOM = 5;
+	int Mode = VOXEL;
+
+	String listOptions[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99" };
+
+	//End init Other Values--
 
 
-	public JButton TM;
-	public JButton Save;
-	public JButton Open;
-	public JComboBox SN;
-	public JButton Reset;
+	//Initialise GUI Variables--
 
-	public JOptionPane er;
+	JButton swapEditorBtn;
+	JButton resetBtn;
+	JButton previewBtn;
+	JButton exportBtn;
 
-	public int sn;
-	public int m;
-	public int edUV=1;
+	JComboBox swapVoxelBox;
 
-	public boolean ao,OSX,OSY,OSZ,KRot,Rend3D;
+	JTextArea preview;
+	JOptionPane popUp;
 
-	public final JFileChooser fc = new JFileChooser();
-
-	private static String Opt[] = {"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99"};
-
-	public int[] VC=new int[300];
-	public int[] VC2=new int[300];
-	public int[] UVC0=new int[1200];
-	public int[] UVC02=new int[1200];
-	public int[] UVC1=new int[1200];
-	public int[] UVC12=new int[1200];
-	public int[] UVC2=new int[1200];
-	public int[] UVC22=new int[1200];
-	public int[] UVC3=new int[1200];
-	public int[] UVC32=new int[1200];
-	public int[] UVC4=new int[1200];
-	public int[] UVC42=new int[1200];
-	public int[] UVC5=new int[1200];
-	public int[] UVC52=new int[1200];
+	//End init GUI Variables--
 
 
-	public MyPanel() {
-		setBorder(BorderFactory.createLineBorder(Color.BLACK));
+	public Panel(){ //For GUI Initilisation.
 
+		exportBtn = new JButton("Export");
+		exportBtn.setToolTipText("Export your model to a JSON File.");
+		//add(exportBtn);
 
-		fc.setAcceptAllFileFilterUsed(false);
-		fc.addChoosableFileFilter(new FileNameExtensionFilter("Json Files (*.json)", "json"));
-		//fc.addChoosableFileFilter(new FileNameExtensionFilter("STL Files (*.stl)", "stl"));
-		//fc.setAcceptAllFileFilterUsed(true);
+		previewBtn = new JButton("Raw Preview");
+		previewBtn.setToolTipText("Shows a raw JSON file view of your current model, ready to export.");
+		add(previewBtn);
 
-		Open = new JButton("Open");
-		Open.setToolTipText("Open an existing .json file.");
-		add(Open);
+		swapEditorBtn = new JButton("Swap Editor");
+		swapEditorBtn.setToolTipText("Swap between Voxel Editing and UV Editing");
+		add(swapEditorBtn);
 
-		Save=new JButton("Export/Save");
-		Save.setToolTipText("Save and Export your current model.");
-		add(Save);
+		resetBtn = new JButton("Reset");
+		resetBtn.setToolTipText("Resets all the Voxel and UV Data of the current Voxel.");
+		add(resetBtn);
 
-		TM = new JButton("Toggle Drawing Mode");
-		TM.setToolTipText("Toggle between Voxel and UV editing modes.");
-		add(TM);
+		swapVoxelBox = new JComboBox(listOptions);
+		swapVoxelBox.setToolTipText("Selects the Voxel set to edit");
+		add(swapVoxelBox);
 
-		Reset = new JButton("Reset Voxel");
-		Reset.setToolTipText("Resets all the values to the default for the current Voxel");
-		add(Reset);
+		//Event Handling
+		EventHandler h = new EventHandler();
+		swapEditorBtn.addActionListener(h);
+		resetBtn.addActionListener(h);
+		previewBtn.addActionListener(h);
+		exportBtn.addActionListener(h);
 
-		SN = new JComboBox(Opt);
-		SN.setToolTipText("The Voxel/UV Set you are editing");
-
-		SN.addItemListener(
-				new ItemListener(){
-					public void itemStateChanged(ItemEvent event) {
-						sn=Integer.parseInt(event.getItem().toString());	
-					}
-				});
-
-		add(SN);
-
-		Handler h = new Handler();
-		Reset.addActionListener(h);
-		TM.addActionListener(h);
-		Save.addActionListener(h);
-		Open.addActionListener(h);
+		swapVoxelBox.addItemListener(new ItemListener(){
+			public void itemStateChanged(ItemEvent e){
+				VoxEditing = Integer.parseInt(e.getItem().toString());
+			}
+		});
 
 		addMouseListener(h);
 		addMouseMotionListener(h);
+
+
+		//Set up basic cube.
+
+		XData.setBase(16, 0);
+		YData.setBase(16, 0);
+		ZData.setBase(16, 0);
+
+		NorthData.setXBase(16, 0);
+		SouthData.setXBase(16, 0);
+		EastData.setXBase(16, 0);
+		WestData.setXBase(16, 0);
+		TopData.setXBase(16, 0);
+		BottomData.setXBase(16, 0);
+		NorthData.setYBase(16, 0);
+		SouthData.setYBase(16, 0);
+		EastData.setYBase(16, 0);
+		WestData.setYBase(16, 0);
+		TopData.setYBase(16, 0);
+		BottomData.setYBase(16, 0);
+
+		NorthData.setCulling(true, 0);
+		SouthData.setCulling(true, 0);
+		EastData.setCulling(true, 0);
+		WestData.setCulling(true, 0);
+		TopData.setCulling(true, 0);
+		BottomData.setCulling(true, 0);
+
+		//Basic cube finished setting up
 	}
 
-	public Dimension getPreferredSize() {
-		return new Dimension(1000,600);
+	public Dimension getPreferredSize(){
+		return new Dimension(1000, 600);
 	}
 
-	protected void paintComponent(Graphics g) {
+	//Paint-----
+	protected void paintComponent(Graphics g){
 		super.paintComponent(g);
 
-		int x,y,z,x2,y2,z2;
-		x=VC[sn*3];
-		y=VC[sn*3+1];
-		z=VC[sn*3+2];
-		x2=VC2[sn*3];
-		y2=VC2[sn*3+1];
-		z2=VC2[sn*3+2];
+		resetBtn.setText("Reset Voxel " + VoxEditing );
 
-		int lx=0,ly=0,lz=0,lx2=0,ly2=0,lz2=0;
-		if(sn>=1){
-			lx=VC[(sn-1)*3];
-			ly=VC[(sn-1)*3+1];
-			lz=VC[(sn-1)*3+2];
-			lx2=VC2[(sn-1)*3];
-			ly2=VC2[(sn-1)*3+1];
-			lz2=VC2[(sn-1)*3+2];
-		}
-
-		int ux1,uy1,ux12,uy12;
-		ux1=UVC0[sn*2];
-		uy1=UVC0[sn*2+1];
-		ux12=UVC02[sn*2];
-		uy12=UVC02[sn*2+1];
-
-		int ux2,uy2,ux22,uy22;
-		ux2=UVC1[sn*2];
-		uy2=UVC1[sn*2+1];
-		ux22=UVC12[sn*2];
-		uy22=UVC12[sn*2+1];
-
-		int ux3,uy3,ux32,uy32;
-		ux3=UVC2[sn*2];
-		uy3=UVC2[sn*2+1];
-		ux32=UVC22[sn*2];
-		uy32=UVC22[sn*2+1];
-
-		int ux4,uy4,ux42,uy42;
-		ux4=UVC3[sn*2];
-		uy4=UVC3[sn*2+1];
-		ux42=UVC32[sn*2];
-		uy42=UVC32[sn*2+1];
-
-		int ux5,uy5,ux52,uy52;
-		ux5=UVC4[sn*2];
-		uy5=UVC4[sn*2+1];
-		ux52=UVC42[sn*2];
-		uy52=UVC42[sn*2+1];
-
-		int ux6,uy6,ux62,uy62;
-		ux6=UVC5[sn*2];
-		uy6=UVC5[sn*2+1];
-		ux62=UVC52[sn*2];
-		uy62=UVC52[sn*2+1];
+		//Set up Font
+		g.setFont(new Font("Arial", Font.PLAIN, 14));
 
 		g.setColor(Color.BLACK);
 
-		g.drawString("Info for Voxel and UV set:" + sn,10,50);
-		g.drawString("From[X:"+x+",Y:"+y+",Z:"+z+"]", 10, 65);
-		g.drawString("To[X:"+x2+",Y:"+y2+",Z:"+z2+"]", 10, 80);
-		g.drawString("UV:", 10, 110);
-		g.drawString("Top:[ "+ux1+", "+uy1+", "+ux12+", "+uy12+" ]", 10, 125);
-		g.drawString("Bottom:[ "+ux2+", "+uy2+", "+ux22+", "+uy22+" ]", 10, 140);
-		g.drawString("Front:[ "+ux3+", "+uy3+", "+ux32+", "+uy32+" ]", 10, 155);
-		g.drawString("Back:[ "+ux4+", "+uy4+", "+ux42+", "+uy42+" ]", 10, 170);
-		g.drawString("Left:[ "+ux5+", "+uy5+", "+ux52+", "+uy52+" ]", 10, 185);
-		g.drawString("Right:[ "+ux6+", "+uy6+", "+ux62+", "+uy62+" ]", 10, 200);
+		//Load and display mainGrid
+		Toolkit toolkit = Toolkit.getDefaultToolkit();
+		Image Grid = toolkit.getImage(getClass().getResource("/res/mainGrid.png"));
+		g.drawImage(Grid, 0, 0, null);
 
-		g.drawString("Model Options", 65, 250);
-		if(ao==true){
-			g.setColor(Color.GREEN);
-		}
-		if(ao==false){
-			g.setColor(Color.RED);
-		}
-		g.fillRoundRect(8, 252, 100, 15,5,5);
+		//Display worldwide Info
+		g.drawString("Editing Voxel & UV set " + VoxEditing, 5, 55);
+		g.drawString("Voxel Origin { " + XData.getOrigin(VoxEditing) + ", " + YData.getOrigin(VoxEditing) + ", " + ZData.getOrigin(VoxEditing) + " }", 5, 70);
+		g.drawString("Voxel Base   { " + XData.getBase(VoxEditing) + ", " + YData.getBase(VoxEditing) + ", " + ZData.getBase(VoxEditing) + " }", 5, 85);
+		g.drawString("UV North   { " + NorthData.getXOrigin(VoxEditing) + ", " + NorthData.getYOrigin(VoxEditing) + ", " + NorthData.getXBase(VoxEditing) + ", " + NorthData.getYBase(VoxEditing) + " } Cull:" + NorthData.getCulling(VoxEditing), 5, 115);
+		g.drawString("UV South   { " + SouthData.getXOrigin(VoxEditing) + ", " + SouthData.getYOrigin(VoxEditing) + ", " + SouthData.getXBase(VoxEditing) + ", " + SouthData.getYBase(VoxEditing) + " } Cull:" + SouthData.getCulling(VoxEditing), 5, 130);
+		g.drawString("UV East     { " + EastData.getXOrigin(VoxEditing) + ", " + EastData.getYOrigin(VoxEditing) + ", " + EastData.getXBase(VoxEditing) + ", " + EastData.getYBase(VoxEditing) + " } Cull:" + EastData.getCulling(VoxEditing), 5, 145);
+		g.drawString("UV West    { " + WestData.getXOrigin(VoxEditing) + ", " + WestData.getYOrigin(VoxEditing) + ", " + WestData.getXBase(VoxEditing) + ", " + WestData.getYBase(VoxEditing) + " } Cull:" + WestData.getCulling(VoxEditing), 5, 160);
+		g.drawString("UV Top      { " + TopData.getXOrigin(VoxEditing) + ", " + TopData.getYOrigin(VoxEditing) + ", " + TopData.getXBase(VoxEditing) + ", " + TopData.getYBase(VoxEditing) + " } Cull:" + TopData.getCulling(VoxEditing), 5, 175);
+		g.drawString("UV Bottom { " + BottomData.getXOrigin(VoxEditing) + ", " + BottomData.getYOrigin(VoxEditing) + ", " + BottomData.getXBase(VoxEditing) + ", " + BottomData.getYBase(VoxEditing) + " } Cull:" + BottomData.getCulling(VoxEditing), 5, 190);
+
+		g.drawString("Model Options:", 5, 220);
+
+		if(OptionData.getAmbientOcc()) g.setColor(Color.GRAY);
+		else g.setColor(Color.BLACK);
+		g.drawString("Ambient Occlusion", 5, 235);
+		if(OptionData.getRandOffsetX()) g.setColor(Color.GRAY);
+		else g.setColor(Color.BLACK);
+		g.drawString("Random Offset X", 5, 250);
+		if(OptionData.getRandOffsetY()) g.setColor(Color.GRAY);
+		else g.setColor(Color.BLACK);
+		g.drawString("Random Offset Y", 5, 265);
+		if(OptionData.getRandOffsetZ()) g.setColor(Color.GRAY);
+		else g.setColor(Color.BLACK);
+		g.drawString("Random Offset Z", 5, 280);
+
 		g.setColor(Color.BLACK);
-		g.drawString("Anti-Occlusion", 10, 265);
-		g.drawRoundRect(8, 252, 100, 15,5,5);
+		g.drawString("Change particle texture", 5, 310);
 
-		g.setColor(Color.BLACK);
-		g.drawString("Random Offset:", 10, 280);
+		g.drawString("For help click here or visit http://mcmodelmaker.weebly.com", 373, 555);
 
-		if(OSX==true){
-			g.setColor(Color.GREEN);
-		}
-		if(OSX==false){
-			g.setColor(Color.RED);
-		}
-		g.fillRoundRect(23, 282, 40, 15,5,5);
-		g.setColor(Color.BLACK);
-		g.drawString("    X", 25, 295);
-		g.drawRoundRect(23, 282, 40, 15,5,5);
 
-		if(OSY==true){
-			g.setColor(Color.GREEN);
-		}
-		if(OSY==false){
-			g.setColor(Color.RED);
-		}
-		g.fillRoundRect(23, 297, 40, 15,5,5);
-		g.setColor(Color.BLACK);
-		g.drawString("    Y", 25, 310);
-		g.drawRoundRect(23, 297, 40, 15,5,5);
-
-		if(OSZ==true){
-			g.setColor(Color.GREEN);
-		}
-		if(OSZ==false){
-			g.setColor(Color.RED);
-		}
-		g.fillRoundRect(23, 312, 40, 15,5,5);
-		g.setColor(Color.BLACK);
-		g.drawString("    Z", 25, 325);
-		g.drawRoundRect(23, 312, 40, 15,5,5);
-
-		if(KRot==true){
-			g.setColor(Color.GREEN);
-		}
-		if(KRot==false){
-			g.setColor(Color.RED);
-		}
-		g.fillRoundRect(8, 327, 150, 15,5,5);
-		g.setColor(Color.BLACK);
-		g.drawString("Rotate Variant Textures", 10, 340);
-		g.drawRoundRect(8, 327, 150, 15,5,5);
-
-		if(Rend3D==true){
-			g.setColor(Color.GREEN);
-		}
-		if(Rend3D==false){
-			g.setColor(Color.RED);
-		}
-		g.fillRoundRect(8, 342, 150, 15,5,5);
-		g.setColor(Color.BLACK);
-		g.drawString("Render 3D in inventory", 10, 355);
-		g.drawRoundRect(8, 342, 150, 15,5,5);
-
-		if(m==1){ // Check if in UV Editor
-			g.setColor(Color.GREEN);
-
-			if(edUV==1)g.fillRect(ux1*20+305,uy1*20+35,(ux12-ux1+1)*20,(uy12-uy1+1)*20);
-			else if(edUV==2)g.fillRect(ux2*20+305,uy2*20+35,(ux22-ux2+1)*20,(uy22-uy2+1)*20);
-			else if(edUV==3)g.fillRect(ux3*20+305,uy3*20+35,(ux32-ux3+1)*20,(uy32-uy3+1)*20);
-			else if(edUV==4)g.fillRect(ux4*20+305,uy4*20+35,(ux42-ux4+1)*20,(uy42-uy4+1)*20);
-			else if(edUV==5)g.fillRect(ux5*20+305,uy5*20+35,(ux52-ux5+1)*20,(uy52-uy5+1)*20);
-			else if(edUV==6)g.fillRect(ux6*20+305,uy6*20+35,(ux62-ux6+1)*20,(uy62-uy6+1)*20);
-
-			g.setColor(Color.GRAY);
-			for(int i=1; i<=16;i++){
-				g.drawLine(i*20+305, 35, i*20+305, 16*20+55);
-			}
-			for(int i=1; i<=16;i++){
-				g.drawLine(305, i*20+35, 16*20+325, i*20+35);
-			}
-
+		if(Mode == VOXEL){
 			g.setColor(Color.BLUE);
-			g.drawString("UV Editor",10,20);
-			g.setColor(Color.DARK_GRAY);
-			g.drawRect(5, 35, 990, 560);
-			g.drawRect(5, 35, 300, 560);
-			g.drawLine(795, 35, 795, 595);
-			g.drawLine(16*20+325, 35, 16*20+325, 16*20+55);
-			g.drawLine(305, 16*20+55, 16*20+325, 16*20+55);
+			g.drawString("Voxel Editor", 5, 20);
 
-			g.setColor(Color.BLACK);
-			g.drawString("Editing face:",800,55);
+			Image VoxGrid = toolkit.getImage(getClass().getResource("/res/VoxelGrid.png"));
+			Image VoxBGrid = toolkit.getImage(getClass().getResource("/res/VoxelBackGrid.png"));
 
-			if(edUV==1)g.setColor(Color.GRAY);
-			g.drawString("Top",805,70); //edUV 1
+			g.drawImage(VoxBGrid, 0, 0, null);
 
-			g.setColor(Color.BLACK);
-			if(edUV==2)g.setColor(Color.GRAY);
-			g.drawString("Bottom",805,85);//edUV 2
+			//Draw cube faces
 
-			g.setColor(Color.BLACK);
-			if(edUV==3)g.setColor(Color.GRAY);
-			g.drawString("Front           (Facing North)",805,100);//edUV 3
-
-			g.setColor(Color.BLACK);
-			if(edUV==4)g.setColor(Color.GRAY);
-			g.drawString("Back            (Facing South)",805,115);//edUV 4
-
-			g.setColor(Color.BLACK);
-			if(edUV==5)g.setColor(Color.GRAY);
-			g.drawString("Left             (Facing East)",805,130);//edUV 5
-
-			g.setColor(Color.BLACK);
-			if(edUV==6)g.setColor(Color.GRAY);
-			g.drawString("Right           (Facing West)",805,145);//edUV 6
-
-
-		}
-
-
-		else if(m==0){ //Check if in Voxel Editor
-			g.setColor(Color.BLUE);
-			g.drawString("Voxel Editor",10,20);
-			g.setColor(Color.DARK_GRAY);
-			g.drawRect(5, 35, 990, 560);
-			g.drawRect(5, 35, 300, 560);
-
-			g.drawRect(305, 35, 240, 240);
-			g.drawRect(555, 285, 240, 240);
-			g.drawRect(305, 285, 240, 240);
-			g.drawString("Do not redistribute!",490,585);
-
-			g.drawString("Top View, X and Z", 550 , 50);
-			g.drawString("Side View, Z and Y", 620 , 540);
-			g.drawString("Front View, X and Y", 370 , 540);
-
-			g.setColor(Color.LIGHT_GRAY);//Y-Square Grid
-			g.drawLine(315, 35+1, 315, 274);
-			g.drawLine(325, 35+1, 325, 274);
-			g.drawLine(335, 35+1, 335, 274);
-			g.drawLine(345, 35+1, 345, 274);
-			g.drawLine(355, 35+1, 355, 274);
-			g.drawLine(365, 35+1, 365, 274);
-			g.drawLine(375, 35+1, 375, 274);
-			g.drawLine(385, 35+1, 385, 274);
-			g.drawLine(395, 35+1, 395, 274);
-			g.drawLine(405, 35+1, 405, 274);
-			g.drawLine(415, 35+1, 415, 274);
-			g.drawLine(425, 35+1, 425, 274);
-			g.drawLine(435, 35+1, 435, 274);
-			g.drawLine(445, 35+1, 445, 274);
-			g.drawLine(455, 35+1, 455, 274);
-			g.drawLine(465, 35+1, 465, 274);
-			g.drawLine(475, 35+1, 475, 274);
-			g.drawLine(485, 35+1, 485, 274);
-			g.drawLine(495, 35+1, 495, 274);
-			g.drawLine(505, 35+1, 505, 274);
-			g.drawLine(515, 35+1, 515, 274);
-			g.drawLine(525, 35+1, 525, 274);
-			g.drawLine(535, 35+1, 535, 274);
-
-			g.drawLine(315, 35+251, 315, 274+250);
-			g.drawLine(325, 35+251, 325, 274+250);
-			g.drawLine(335, 35+251, 335, 274+250);
-			g.drawLine(345, 35+251, 345, 274+250);
-			g.drawLine(355, 35+251, 355, 274+250);
-			g.drawLine(365, 35+251, 365, 274+250);
-			g.drawLine(375, 35+251, 375, 274+250);
-			g.drawLine(385, 35+251, 385, 274+250);
-			g.drawLine(395, 35+251, 395, 274+250);
-			g.drawLine(405, 35+251, 405, 274+250);
-			g.drawLine(415, 35+251, 415, 274+250);
-			g.drawLine(425, 35+251, 425, 274+250);
-			g.drawLine(435, 35+251, 435, 274+250);
-			g.drawLine(445, 35+251, 445, 274+250);
-			g.drawLine(455, 35+251, 455, 274+250);
-			g.drawLine(465, 35+251, 465, 274+250);
-			g.drawLine(475, 35+251, 475, 274+250);
-			g.drawLine(485, 35+251, 485, 274+250);
-			g.drawLine(495, 35+251, 495, 274+250);
-			g.drawLine(505, 35+251, 505, 274+250);
-			g.drawLine(515, 35+251, 515, 274+250);
-			g.drawLine(525, 35+251, 525, 274+250);
-			g.drawLine(535, 35+251, 535, 274+250);
-
-			g.drawLine(315+250, 35+251, 315+250, 274+250);
-			g.drawLine(325+250, 35+251, 325+250, 274+250);
-			g.drawLine(335+250, 35+251, 335+250, 274+250);
-			g.drawLine(345+250, 35+251, 345+250, 274+250);
-			g.drawLine(355+250, 35+251, 355+250, 274+250);
-			g.drawLine(365+250, 35+251, 365+250, 274+250);
-			g.drawLine(375+250, 35+251, 375+250, 274+250);
-			g.drawLine(385+250, 35+251, 385+250, 274+250);
-			g.drawLine(395+250, 35+251, 395+250, 274+250);
-			g.drawLine(405+250, 35+251, 405+250, 274+250);
-			g.drawLine(415+250, 35+251, 415+250, 274+250);
-			g.drawLine(425+250, 35+251, 425+250, 274+250);
-			g.drawLine(435+250, 35+251, 435+250, 274+250);
-			g.drawLine(445+250, 35+251, 445+250, 274+250);
-			g.drawLine(455+250, 35+251, 455+250, 274+250);
-			g.drawLine(465+250, 35+251, 465+250, 274+250);
-			g.drawLine(475+250, 35+251, 475+250, 274+250);
-			g.drawLine(485+250, 35+251, 485+250, 274+250);
-			g.drawLine(495+250, 35+251, 495+250, 274+250);
-			g.drawLine(505+250, 35+251, 505+250, 274+250);
-			g.drawLine(515+250, 35+251, 515+250, 274+250);
-			g.drawLine(525+250, 35+251, 525+250, 274+250);
-			g.drawLine(535+250, 35+251, 535+250, 274+250);
-
-			g.drawLine(306, 46, 544, 46);
-			g.drawLine(306, 56, 544, 56);
-			g.drawLine(306, 66, 544, 66);
-			g.drawLine(306, 76, 544, 76);
-			g.drawLine(306, 86, 544, 86);
-			g.drawLine(306, 96, 544, 96);
-			g.drawLine(306, 106, 544, 106);
-			g.drawLine(306, 116, 544, 116);
-			g.drawLine(306, 126, 544, 126);
-			g.drawLine(306, 136, 544, 136);
-			g.drawLine(306, 146, 544, 146);
-			g.drawLine(306, 156, 544, 156);
-			g.drawLine(306, 166, 544, 166);
-			g.drawLine(306, 176, 544, 176);
-			g.drawLine(306, 186, 544, 186);
-			g.drawLine(306, 196, 544, 196);
-			g.drawLine(306, 206, 544, 206);
-			g.drawLine(306, 216, 544, 216);
-			g.drawLine(306, 226, 544, 226);
-			g.drawLine(306, 236, 544, 236);
-			g.drawLine(306, 246, 544, 246);
-			g.drawLine(306, 256, 544, 256);
-			g.drawLine(306, 266, 544, 266);
-
-			g.drawLine(306, 46+250, 544, 46+250);
-			g.drawLine(306, 56+250, 544, 56+250);
-			g.drawLine(306, 66+250, 544, 66+250);
-			g.drawLine(306, 76+250, 544, 76+250);
-			g.drawLine(306, 86+250, 544, 86+250);
-			g.drawLine(306, 96+250, 544, 96+250);
-			g.drawLine(306, 106+250, 544, 106+250);
-			g.drawLine(306, 116+250, 544, 116+250);
-			g.drawLine(306, 126+250, 544, 126+250);
-			g.drawLine(306, 136+250, 544, 136+250);
-			g.drawLine(306, 146+250, 544, 146+250);
-			g.drawLine(306, 156+250, 544, 156+250);
-			g.drawLine(306, 166+250, 544, 166+250);
-			g.drawLine(306, 176+250, 544, 176+250);
-			g.drawLine(306, 186+250, 544, 186+250);
-			g.drawLine(306, 196+250, 544, 196+250);
-			g.drawLine(306, 206+250, 544, 206+250);
-			g.drawLine(306, 216+250, 544, 216+250);
-			g.drawLine(306, 226+250, 544, 226+250);
-			g.drawLine(306, 236+250, 544, 236+250);
-			g.drawLine(306, 246+250, 544, 246+250);
-			g.drawLine(306, 256+250, 544, 256+250);
-			g.drawLine(306, 266+250, 544, 266+250);
-
-			g.drawLine(306+250, 46+250, 544+250, 46+250);
-			g.drawLine(306+250, 56+250, 544+250, 56+250);
-			g.drawLine(306+250, 66+250, 544+250, 66+250);
-			g.drawLine(306+250, 76+250, 544+250, 76+250);
-			g.drawLine(306+250, 86+250, 544+250, 86+250);
-			g.drawLine(306+250, 96+250, 544+250, 96+250);
-			g.drawLine(306+250, 106+250, 544+250, 106+250);
-			g.drawLine(306+250, 116+250, 544+250, 116+250);
-			g.drawLine(306+250, 126+250, 544+250, 126+250);
-			g.drawLine(306+250, 136+250, 544+250, 136+250);
-			g.drawLine(306+250, 146+250, 544+250, 146+250);
-			g.drawLine(306+250, 156+250, 544+250, 156+250);
-			g.drawLine(306+250, 166+250, 544+250, 166+250);
-			g.drawLine(306+250, 176+250, 544+250, 176+250);
-			g.drawLine(306+250, 186+250, 544+250, 186+250);
-			g.drawLine(306+250, 196+250, 544+250, 196+250);
-			g.drawLine(306+250, 206+250, 544+250, 206+250);
-			g.drawLine(306+250, 216+250, 544+250, 216+250);
-			g.drawLine(306+250, 226+250, 544+250, 226+250);
-			g.drawLine(306+250, 236+250, 544+250, 236+250);
-			g.drawLine(306+250, 246+250, 544+250, 246+250);
-			g.drawLine(306+250, 256+250, 544+250, 256+250);
-			g.drawLine(306+250, 266+250, 544+250, 266+250);
-
-			g.setColor(Color.RED);
-			g.fillRect(346, 77, 9, 9);
-			g.fillRect(346, 327, 9, 9);
-			g.fillRect(596, 327, 9, 9);
-			g.fillRect(496, 77, 9, 9);
-			g.fillRect(496, 327, 9, 9);
-			g.fillRect(746, 327, 9, 9);
-			g.fillRect(346, 227, 9, 9);
-			g.fillRect(346, 477, 9, 9);
-			g.fillRect(596, 477, 9, 9);
-			g.fillRect(496, 227, 9, 9);
-			g.fillRect(496, 477, 9, 9);
-			g.fillRect(746, 477, 9, 9);
-
-			g.setColor(Color.DARK_GRAY);
-			g.drawRect(795, 395, 200, 200);
-			g.drawString("3D viewer in progress!",825,450);
-			g.drawLine(795, 395, 795, 35);
-
-			if(sn>=1){
+			if(VoxEditing >= 1){
 				g.setColor(Color.YELLOW);
-				g.fillRect(lx*10+346,lz*10+77,(lx2-lx)*10-1,(lz2-lz)*10-1);
-				g.fillRect(lx*10+346,ly*10+327,(lx2-lx)*10-1,(ly2-ly)*10-1);
-				g.fillRect(lz*10+596,ly*10+327,(lz2-lz)*10-1,(ly2-ly)*10-1);
+				g.fillRect(XData.getOrigin(VoxEditing-1) * 10 + 341, ZData.getOrigin(VoxEditing-1) * 10 + 75,  (XData.getBase(VoxEditing-1) * 10 + 341) - (XData.getOrigin(VoxEditing-1) * 10 + 341), (ZData.getBase(VoxEditing-1) * 10 + 341) - (ZData.getOrigin(VoxEditing-1) * 10 + 341));
+				g.fillRect(XData.getOrigin(VoxEditing-1) * 10 + 341, YData.getOrigin(VoxEditing-1) * 10 + 334,  (XData.getBase(VoxEditing-1) * 10 + 341) - (XData.getOrigin(VoxEditing-1) * 10 + 341), (YData.getBase(VoxEditing-1) * 10 + 341) - (YData.getOrigin(VoxEditing-1) * 10 + 341));
+				g.fillRect(ZData.getOrigin(VoxEditing-1) * 10 + 601, YData.getOrigin(VoxEditing-1) * 10 + 334,  (ZData.getBase(VoxEditing-1) * 10 + 341) - (ZData.getOrigin(VoxEditing-1) * 10 + 341), (YData.getBase(VoxEditing-1) * 10 + 601) - (YData.getOrigin(VoxEditing-1) * 10 + 601));
+
 			}
+
 			g.setColor(Color.GREEN);
-			g.fillRect(x*10+346,z*10+77,(x2-x)*10-1,(z2-z)*10-1);
-			g.fillRect(x*10+346,y*10+327,(x2-x)*10-1,(y2-y)*10-1);
-			g.fillRect(z*10+596,y*10+327,(z2-z)*10-1,(y2-y)*10-1);
+			g.fillRect(XData.getOrigin(VoxEditing) * 10 + 341, ZData.getOrigin(VoxEditing) * 10 + 75,  (XData.getBase(VoxEditing) * 10 + 341) - (XData.getOrigin(VoxEditing) * 10 + 341), (ZData.getBase(VoxEditing) * 10 + 341) - (ZData.getOrigin(VoxEditing) * 10 + 341));
+			g.fillRect(XData.getOrigin(VoxEditing) * 10 + 341, YData.getOrigin(VoxEditing) * 10 + 334,  (XData.getBase(VoxEditing) * 10 + 341) - (XData.getOrigin(VoxEditing) * 10 + 341), (YData.getBase(VoxEditing) * 10 + 341) - (YData.getOrigin(VoxEditing) * 10 + 341));
+			g.fillRect(ZData.getOrigin(VoxEditing) * 10 + 601, YData.getOrigin(VoxEditing) * 10 + 334,  (ZData.getBase(VoxEditing) * 10 + 341) - (ZData.getOrigin(VoxEditing) * 10 + 341), (YData.getBase(VoxEditing) * 10 + 601) - (YData.getOrigin(VoxEditing) * 10 + 601));
 
 
+			g.drawImage(VoxGrid, 0, 0, null);
+
+			Image comment = toolkit.getImage(getClass().getResource("/res/comment.png"));
+			g.drawImage(comment, 800, 35, 110, 40, null);
+
+			g.setColor(Color.BLACK);
+			g.drawString("Add Comment", 810, 95);
+
+		}else if(Mode == UV){
+			g.setColor(Color.BLUE);
+			g.drawString("UV Editor", 5, 20);
+
+			Image UVBG = toolkit.getImage("/BackgroundForMCMM.png");//Draw Background
+			if(UVBG != null && UVBG.getWidth(null) == 16 && UVBG.getHeight(null) == 16) g.drawImage(UVBG, 301, 36, 320, 320, null);
+
+
+			g.setColor(Color.GREEN);
+			if(FaceEditing == NORTH) g.fillRect(NorthData.getXOrigin(VoxEditing) * 20 + 301, NorthData.getYOrigin(VoxEditing) * 20 + 36,  (NorthData.getXBase(VoxEditing) * 20 + 281) - (NorthData.getXOrigin(VoxEditing) * 20 + 281), (NorthData.getYBase(VoxEditing) * 20 + 281) - (NorthData.getYOrigin(VoxEditing) * 20 + 281));
+			else if(FaceEditing == SOUTH) g.fillRect(SouthData.getXOrigin(VoxEditing) * 20 + 301, SouthData.getYOrigin(VoxEditing) * 20 + 36,  (SouthData.getXBase(VoxEditing) * 20 + 281) - (SouthData.getXOrigin(VoxEditing) * 20 + 281), (SouthData.getYBase(VoxEditing) * 20 + 281) - (SouthData.getYOrigin(VoxEditing) * 20 + 281));
+			else if(FaceEditing == EAST) g.fillRect(EastData.getXOrigin(VoxEditing) * 20 + 301, EastData.getYOrigin(VoxEditing) * 20 + 36,  (EastData.getXBase(VoxEditing) * 20 + 281) - (EastData.getXOrigin(VoxEditing) * 20 + 281), (EastData.getYBase(VoxEditing) * 20 + 281) - (EastData.getYOrigin(VoxEditing) * 20 + 281));
+			else if(FaceEditing == WEST) g.fillRect(WestData.getXOrigin(VoxEditing) * 20 + 301, WestData.getYOrigin(VoxEditing) * 20 + 36,  (WestData.getXBase(VoxEditing) * 20 + 281) - (WestData.getXOrigin(VoxEditing) * 20 + 281), (WestData.getYBase(VoxEditing) * 20 + 281) - (WestData.getYOrigin(VoxEditing) * 20 + 281));
+			else if(FaceEditing == TOP) g.fillRect(TopData.getXOrigin(VoxEditing) * 20 + 301, TopData.getYOrigin(VoxEditing) * 20 + 36,  (TopData.getXBase(VoxEditing) * 20 + 281) - (TopData.getXOrigin(VoxEditing) * 20 + 281), (TopData.getYBase(VoxEditing) * 20 + 281) - (TopData.getYOrigin(VoxEditing) * 20 + 281));
+			else if(FaceEditing == BOTTOM) g.fillRect(BottomData.getXOrigin(VoxEditing) * 20 + 301, BottomData.getYOrigin(VoxEditing) * 20 + 36,  (BottomData.getXBase(VoxEditing) * 20 + 281) - (BottomData.getXOrigin(VoxEditing) * 20 + 281), (BottomData.getYBase(VoxEditing) * 20 + 281) - (BottomData.getYOrigin(VoxEditing) * 20 + 281));
+
+			Image UVGrid = toolkit.getImage(getClass().getResource("/res/UVGrid.png"));
+			g.drawImage(UVGrid, 0, 0, null);
+
+			Image changeTex = toolkit.getImage(getClass().getResource("/res/changeTex.png"));
+			g.drawImage(changeTex, 801, 36, 100, 100, null);
+
+			String FaceEdStr = "North";
+
+			if(FaceEditing == NORTH)FaceEdStr = "North";
+			if(FaceEditing == SOUTH)FaceEdStr = "South";
+			if(FaceEditing == EAST)FaceEdStr = "East";
+			if(FaceEditing == WEST)FaceEdStr = "West";
+			if(FaceEditing == TOP)FaceEdStr = "Top";
+			if(FaceEditing == BOTTOM)FaceEdStr = "Bottom";
+
+			g.setColor(Color.BLACK);
+			g.drawString("Editing " + FaceEdStr + " Face", 625, 55);
+
+			if(FaceEditing == NORTH) g.setColor(Color.GRAY);
+			else g.setColor(Color.BLACK);
+			g.drawString("North", 625, 70);
+			if(FaceEditing == SOUTH) g.setColor(Color.GRAY);
+			else g.setColor(Color.BLACK);
+			g.drawString("South", 625, 85);
+			if(FaceEditing == EAST) g.setColor(Color.GRAY);
+			else g.setColor(Color.BLACK);
+			g.drawString("East", 625, 100);
+			if(FaceEditing == WEST) g.setColor(Color.GRAY);
+			else g.setColor(Color.BLACK);
+			g.drawString("West", 625, 115);
+			if(FaceEditing == TOP) g.setColor(Color.GRAY);
+			else g.setColor(Color.BLACK);
+			g.drawString("Top", 625, 130);
+			if(FaceEditing == BOTTOM) g.setColor(Color.GRAY);
+			else g.setColor(Color.BLACK);
+			g.drawString("Bottom", 625, 145);
+
+
+			Image Cullcross = toolkit.getImage(getClass().getResource("/res/cullX.png"));
+			Image Culltick = toolkit.getImage(getClass().getResource("/res/cullTick.png"));
+			if(FaceEditing == NORTH){
+				if(!NorthData.getCulling(VoxEditing)) g.drawImage(Cullcross, 801, 146, 100, 100, null);
+				else g.drawImage(Culltick, 801, 146, 100, 100, null);
+			}else if(FaceEditing == SOUTH){
+				if(!SouthData.getCulling(VoxEditing)) g.drawImage(Cullcross, 801, 146, 100, 100, null);
+				else g.drawImage(Culltick, 801, 146, 100, 100, null);
+			}else if(FaceEditing == WEST){
+				if(!WestData.getCulling(VoxEditing)) g.drawImage(Cullcross, 801, 146, 100, 100, null);
+				else g.drawImage(Culltick, 801, 146, 100, 100, null);
+			}else if(FaceEditing == EAST){
+				if(!EastData.getCulling(VoxEditing)) g.drawImage(Cullcross, 801, 146, 100, 100, null);
+				else g.drawImage(Culltick, 801, 146, 100, 100, null);
+			}else if(FaceEditing == TOP){
+				if(!TopData.getCulling(VoxEditing)) g.drawImage(Cullcross, 801, 146, 100, 100, null);
+				else g.drawImage(Culltick, 801, 146, 100, 100, null);
+			}else if(FaceEditing == BOTTOM){
+				if(!BottomData.getCulling(VoxEditing)) g.drawImage(Cullcross, 801, 146, 100, 100, null);
+				else g.drawImage(Culltick, 801, 146, 100, 100, null);
+			}
+
+		}else{
+			g.setColor(Color.RED);
+			g.drawString("ERROR", 5, 20);
+		}
+
+
+		if(DevMode){
+			g.setColor(Color.BLACK);
+			g.drawString(mouseX + ", " + mouseY, mouseX, mouseY-5);
 		}
 
 		repaint();
-	} 
-
-	public void setXVal(int val){
-		VC[sn*3]=val;
-	}
-	public void setYVal(int val){
-		VC[sn*3+1]=val;
-	}
-	public void setZVal(int val){
-		VC[sn*3+2]=val;
 	}
 
-	public void setX2Val(int val){
-		VC2[sn*3]=val;
-	}
-	public void setY2Val(int val){
-		VC2[sn*3+1]=val;
-	}
-	public void setZ2Val(int val){
-		VC2[sn*3+2]=val;
-	}
+	private class EventHandler implements ActionListener, MouseListener, MouseMotionListener{
+
+		public void mouseDragged(MouseEvent e) {}
+
+		public void mouseMoved(MouseEvent e) {mouseX = e.getX(); mouseY = e.getY();}
+
+		public void mouseClicked(MouseEvent e) {
+
+			if(e.getX() >= 371 && e.getY() >= 545 && e.getX() <= 752 && e.getY() <= 560){
+				try 
+				{
+					Desktop.getDesktop().browse(new URL("http://mcmodelmaker.weebly.com").toURI());
+				}           
+				catch (Exception ex) {}
+			}
+
+			if(e.getX() >= 5 && e.getY() >= 225 && e.getX() <= 122 && e.getY() <= 240) OptionData.setAmbientOcc(!OptionData.getAmbientOcc());
+			if(e.getX() >= 5 && e.getY() >= 241 && e.getX() <= 114 && e.getY() <= 255) OptionData.setRandOffsetX(!OptionData.getRandOffsetX());
+			if(e.getX() >= 5 && e.getY() >= 256 && e.getX() <= 114 && e.getY() <= 270) OptionData.setRandOffsetY(!OptionData.getRandOffsetY());
+			if(e.getX() >= 5 && e.getY() >= 271 && e.getX() <= 114 && e.getY() <= 285) OptionData.setRandOffsetZ(!OptionData.getRandOffsetZ());
+
+			if(e.getX() >= 5 && e.getY() >= 300 && e.getX() <= 155 && e.getY() <= 315){
+
+				String texstr = OptionData.getParticleTexture();
+
+				String texpath = popUp.showInputDialog(Panel.this, "Please input the path to the texture.", texstr);
+				if(texpath != null) OptionData.setParticleTexture(texpath);
+			}
+
+			if(Mode == VOXEL){
+
+				if(e.getX() >= 301 && e.getX() <= 540 && e.getY() >= 37 && e.getY() <= 276){
+
+					if(e.getButton() == 1){ //Left Click
+
+						double rawx = ((double)(e.getX()-341))/10;
+						int grdx = (int)Math.floor(rawx);
+
+						double rawy = ((double)(e.getY()-78))/10;
+						int grdy = (int)Math.floor(rawy);
+
+						XData.setOrigin(grdx, VoxEditing);
+						ZData.setOrigin(grdy, VoxEditing);
+					}
+
+					if(e.getButton() == 3){ //Right Click
+
+						double rawx = ((double)(e.getX()-331))/10;
+						int grdx = (int)Math.floor(rawx);
+
+						double rawy = ((double)(e.getY()-68))/10;
+						int grdy = (int)Math.floor(rawy);
+
+						XData.setBase(grdx, VoxEditing);
+						ZData.setBase(grdy, VoxEditing);
+					}
+
+					if(e.getButton() == 2){ //Middle Click
+						XData.setOrigin(0, VoxEditing);
+						ZData.setOrigin(0, VoxEditing);
+						XData.setBase(0, VoxEditing);
+						ZData.setBase(0, VoxEditing);
+					}
+
+				}
+
+				if(e.getX() >= 301 && e.getX() <= 540 && e.getY() >= 297 && e.getY() <= 536){
+
+					if(e.getButton() == 1){ //Left Click
+
+						double rawx = ((double)(e.getX()-341))/10;
+						int grdx = (int)Math.floor(rawx);
+
+						double rawy = ((double)(e.getY()-337))/10;
+						int grdy = (int)Math.floor(rawy);
+
+						XData.setOrigin(grdx, VoxEditing);
+						YData.setOrigin(grdy, VoxEditing);
+					}
+
+					if(e.getButton() == 3){ //Right Click
+
+						double rawx = ((double)(e.getX()-331))/10;
+						int grdx = (int)Math.floor(rawx);
+
+						double rawy = ((double)(e.getY()-327))/10;
+						int grdy = (int)Math.floor(rawy);
+
+						XData.setBase(grdx, VoxEditing);
+						YData.setBase(grdy, VoxEditing);
+					}
+
+					if(e.getButton() == 2){ //Middle Click
+						XData.setOrigin(0, VoxEditing);
+						YData.setOrigin(0, VoxEditing);
+						XData.setBase(0, VoxEditing);
+						YData.setBase(0, VoxEditing);
+					}
+
+				}
+
+				if(e.getX() >= 561 && e.getX() <= 800 && e.getY() >= 297 && e.getY() <= 536){
+
+					if(e.getButton() == 1){ //Left Click
+
+						double rawx = ((double)(e.getX()-601))/10;
+						int grdx = (int)Math.floor(rawx);
+
+						double rawy = ((double)(e.getY()-337))/10;
+						int grdy = (int)Math.floor(rawy);
+
+						ZData.setOrigin(grdx, VoxEditing);
+						YData.setOrigin(grdy, VoxEditing);
+					}
+
+					if(e.getButton() == 3){ //Right Click
+
+						double rawx = ((double)(e.getX()-591))/10;
+						int grdx = (int)Math.floor(rawx);
+
+						double rawy = ((double)(e.getY()-327))/10;
+						int grdy = (int)Math.floor(rawy);
+
+						ZData.setBase(grdx, VoxEditing);
+						YData.setBase(grdy, VoxEditing);
+					}
+
+					if(e.getButton() == 2){ //Middle Click
+						ZData.setOrigin(0, VoxEditing);
+						YData.setOrigin(0, VoxEditing);
+						ZData.setBase(0, VoxEditing);
+						YData.setBase(0, VoxEditing);
+					}
+
+				}
+
+				if(e.getX() >= 801 && e.getX() <= 910 && e.getY() >= 35 && e.getY() <= 97){
+					String comment = popUp.showInputDialog(Panel.this, "Please input the comment to display for Voxel " + VoxEditing + ".\nLeave blank to remove the comment", XData.getComment(VoxEditing));
+					if(comment != null) XData.setComment(comment, VoxEditing);
+				}
+			}else if(Mode == UV){
+
+				if(e.getX() >= 301 && e.getX() <= 620 && e.getY() >= 36 && e.getY() <= 355){
+
+					if(e.getButton() == 1){ //Left Click
+
+						double rawx = ((double)(e.getX()-301))/20;
+						int grdx = (int)Math.floor(rawx);
+
+						double rawy = ((double)(e.getY()-36))/20;
+						int grdy = (int)Math.floor(rawy);
+
+						if(FaceEditing == NORTH){
+							NorthData.setXOrigin(grdx, VoxEditing);
+							NorthData.setYOrigin(grdy, VoxEditing);
+						}else if(FaceEditing == SOUTH){
+							SouthData.setXOrigin(grdx, VoxEditing);
+							SouthData.setYOrigin(grdy, VoxEditing);
+						}else if(FaceEditing == EAST){
+							EastData.setXOrigin(grdx, VoxEditing);
+							EastData.setYOrigin(grdy, VoxEditing);
+						}else if(FaceEditing == WEST){
+							WestData.setXOrigin(grdx, VoxEditing);
+							WestData.setYOrigin(grdy, VoxEditing);
+						}else if(FaceEditing == TOP){
+							TopData.setXOrigin(grdx, VoxEditing);
+							TopData.setYOrigin(grdy, VoxEditing);
+						}else if(FaceEditing == BOTTOM){
+							BottomData.setXOrigin(grdx, VoxEditing);
+							BottomData.setYOrigin(grdy, VoxEditing);
+						}
+					}
+
+					if(e.getButton() == 3){ //Right Click
+
+						double rawx = ((double)(e.getX()-281))/20;
+						int grdx = (int)Math.floor(rawx);
+
+						double rawy = ((double)(e.getY()-16))/20;
+						int grdy = (int)Math.floor(rawy);
+
+						if(FaceEditing == NORTH){
+							NorthData.setXBase(grdx, VoxEditing);
+							NorthData.setYBase(grdy, VoxEditing);
+						}else if(FaceEditing == SOUTH){
+							SouthData.setXBase(grdx, VoxEditing);
+							SouthData.setYBase(grdy, VoxEditing);
+						}else if(FaceEditing == EAST){
+							EastData.setXBase(grdx, VoxEditing);
+							EastData.setYBase(grdy, VoxEditing);
+						}else if(FaceEditing == WEST){
+							WestData.setXBase(grdx, VoxEditing);
+							WestData.setYBase(grdy, VoxEditing);
+						}else if(FaceEditing == TOP){
+							TopData.setXBase(grdx, VoxEditing);
+							TopData.setYBase(grdy, VoxEditing);
+						}else if(FaceEditing == BOTTOM){
+							BottomData.setXBase(grdx, VoxEditing);
+							BottomData.setYBase(grdy, VoxEditing);
+						}
+					}
+
+					if(e.getButton() == 2){ //Middle Click
+						if(FaceEditing == NORTH){
+							NorthData.setXOrigin(0, VoxEditing);
+							NorthData.setYOrigin(0, VoxEditing);
+							NorthData.setXBase(0, VoxEditing);
+							NorthData.setYBase(0, VoxEditing);
+						}else if(FaceEditing == SOUTH){
+							SouthData.setXOrigin(0, VoxEditing);
+							SouthData.setYOrigin(0, VoxEditing);
+							SouthData.setXBase(0, VoxEditing);
+							SouthData.setYBase(0, VoxEditing);
+						}else if(FaceEditing == EAST){
+							EastData.setXOrigin(0, VoxEditing);
+							EastData.setYOrigin(0, VoxEditing);
+							EastData.setXBase(0, VoxEditing);
+							EastData.setYBase(0, VoxEditing);
+						}else if(FaceEditing == WEST){
+							WestData.setXOrigin(0, VoxEditing);
+							WestData.setYOrigin(0, VoxEditing);
+							WestData.setXBase(0, VoxEditing);
+							WestData.setYBase(0, VoxEditing);
+						}else if(FaceEditing == TOP){
+							TopData.setXOrigin(0, VoxEditing);
+							TopData.setYOrigin(0, VoxEditing);
+							TopData.setXBase(0, VoxEditing);
+							TopData.setYBase(0, VoxEditing);
+						}else{
+							BottomData.setXOrigin(0, VoxEditing);
+							BottomData.setYOrigin(0, VoxEditing);
+							BottomData.setXBase(0, VoxEditing);
+							BottomData.setYBase(0, VoxEditing);
+						}
+					}
+
+				}
+
+				if(e.getX() >= 801 && e.getX() <= 901 && e.getY() >= 36 && e.getY() <= 139){
+					String texstr = "ERR";
+
+					if(FaceEditing == NORTH){
+						texstr = NorthData.getTexture();
+					}else if(FaceEditing == SOUTH){
+						texstr = SouthData.getTexture();
+					}else if(FaceEditing == WEST){
+						texstr = WestData.getTexture();
+					}else if(FaceEditing == EAST){
+						texstr = EastData.getTexture();
+					}else if(FaceEditing == TOP){
+						texstr = TopData.getTexture();
+					}else if(FaceEditing == BOTTOM){
+						texstr = BottomData.getTexture();
+					}
+
+					String texpath = popUp.showInputDialog(Panel.this, "Please input the path to the texture.", texstr);
+					if(texpath != null){
+						if(FaceEditing == NORTH){
+							NorthData.setTexture(texpath);
+						}else if(FaceEditing == SOUTH){
+							SouthData.setTexture(texpath);
+						}else if(FaceEditing == WEST){
+							WestData.setTexture(texpath);
+						}else if(FaceEditing == EAST){
+							EastData.setTexture(texpath);
+						}else if(FaceEditing == TOP){
+							TopData.setTexture(texpath);
+						}else if(FaceEditing == BOTTOM){
+							BottomData.setTexture(texpath);
+						}
+					}
+				}
+
+				if(e.getX() >= 801 && e.getX() <= 901 && e.getY() >= 149 && e.getY() <= 249){
+					if(FaceEditing == NORTH){
+						NorthData.setCulling(!NorthData.getCulling(VoxEditing), VoxEditing);
+					}else if(FaceEditing == SOUTH){
+						SouthData.setCulling(!SouthData.getCulling(VoxEditing), VoxEditing);
+					}else if(FaceEditing == WEST){
+						WestData.setCulling(!WestData.getCulling(VoxEditing), VoxEditing);
+					}else if(FaceEditing == EAST){
+						EastData.setCulling(!EastData.getCulling(VoxEditing), VoxEditing);
+					}else if(FaceEditing == TOP){
+						TopData.setCulling(!TopData.getCulling(VoxEditing), VoxEditing);
+					}else if(FaceEditing == BOTTOM){
+						BottomData.setCulling(!BottomData.getCulling(VoxEditing), VoxEditing);
+					}
+				}
+
+				if(e.getX() >= 627 && e.getX() <= 659 && e.getY() >= 62 && e.getY() <= 72) FaceEditing = NORTH;
+				if(e.getX() >= 627 && e.getX() <= 661 && e.getY() >= 78 && e.getY() <= 85) FaceEditing = SOUTH;
+				if(e.getX() >= 627 && e.getX() <= 653 && e.getY() >= 93 && e.getY() <= 102) FaceEditing = EAST;
+				if(e.getX() >= 626 && e.getX() <= 661 && e.getY() >= 108 && e.getY() <= 117) FaceEditing = WEST;
+				if(e.getX() >= 627 && e.getX() <= 650 && e.getY() >= 123 && e.getY() <= 135) FaceEditing = TOP;
+				if(e.getX() >= 627 && e.getX() <= 668 && e.getY() >= 138 && e.getY() <= 147) FaceEditing = BOTTOM;
+			}
 
 
-	private class Handler implements ActionListener,MouseListener,MouseMotionListener{
+		}
 
-		public void actionPerformed(ActionEvent event) {
-			if(TM==event.getSource()){
-				if(m==1){
-					m=0;
-					repaint();
+		public void mousePressed(MouseEvent e) {}
+
+		public void mouseReleased(MouseEvent e) {}
+
+		public void mouseEntered(MouseEvent e) {}
+
+		public void mouseExited(MouseEvent e) {}
+
+		public void actionPerformed(ActionEvent e) {
+
+			if(swapEditorBtn == e.getSource()){
+				if(Mode == VOXEL){
+					Mode = UV;
 				}else{
-					m=1;
-					repaint();
+					Mode = VOXEL;
 				}
+			}else if(resetBtn == e.getSource()){
+				if(VoxEditing == 0){
+					XData.setOrigin(0, 0);
+					YData.setOrigin(0, 0);
+					ZData.setOrigin(0, 0);
+
+					XData.setBase(16, 0);
+					YData.setBase(16, 0);
+					ZData.setBase(16, 0);
+
+					NorthData.setXOrigin(0, 0);
+					SouthData.setXOrigin(0, 0);
+					EastData.setXOrigin(0, 0);
+					WestData.setXOrigin(0, 0);
+					TopData.setXOrigin(0, 0);
+					BottomData.setXOrigin(0, 0);
+					NorthData.setYOrigin(0, 0);
+					SouthData.setYOrigin(0, 0);
+					EastData.setYOrigin(0, 0);
+					WestData.setYOrigin(0, 0);
+					TopData.setYOrigin(0, 0);
+					BottomData.setYOrigin(0, 0);
+
+					NorthData.setXBase(16, 0);
+					SouthData.setXBase(16, 0);
+					EastData.setXBase(16, 0);
+					WestData.setXBase(16, 0);
+					TopData.setXBase(16, 0);
+					BottomData.setXBase(16, 0);
+					NorthData.setYBase(16, 0);
+					SouthData.setYBase(16, 0);
+					EastData.setYBase(16, 0);
+					WestData.setYBase(16, 0);
+					TopData.setYBase(16, 0);
+					BottomData.setYBase(16, 0);
+
+					NorthData.setCulling(true, 0);
+					SouthData.setCulling(true, 0);
+					EastData.setCulling(true, 0);
+					WestData.setCulling(true, 0);
+					TopData.setCulling(true, 0);
+					BottomData.setCulling(true, 0);
+
+				}else{
+					XData.setOrigin(0, VoxEditing);
+					YData.setOrigin(0, VoxEditing);
+					ZData.setOrigin(0, VoxEditing);
+
+					XData.setBase(0, VoxEditing);
+					YData.setBase(0, VoxEditing);
+					ZData.setBase(0, VoxEditing);
+
+					NorthData.setXOrigin(0, VoxEditing);
+					SouthData.setXOrigin(0, VoxEditing);
+					EastData.setXOrigin(0, VoxEditing);
+					WestData.setXOrigin(0, VoxEditing);
+					TopData.setXOrigin(0, VoxEditing);
+					BottomData.setXOrigin(0, VoxEditing);
+					NorthData.setYOrigin(0, VoxEditing);
+					SouthData.setYOrigin(0, VoxEditing);
+					EastData.setYOrigin(0, VoxEditing);
+					WestData.setYOrigin(0, VoxEditing);
+					TopData.setYOrigin(0, VoxEditing);
+					BottomData.setYOrigin(0, VoxEditing);
+
+					NorthData.setXBase(0, VoxEditing);
+					SouthData.setXBase(0, VoxEditing);
+					EastData.setXBase(0, VoxEditing);
+					WestData.setXBase(0, VoxEditing);
+					TopData.setXBase(0, VoxEditing);
+					BottomData.setXBase(0, VoxEditing);
+					NorthData.setYBase(0, VoxEditing);
+					SouthData.setYBase(0, VoxEditing);
+					EastData.setYBase(0, VoxEditing);
+					WestData.setYBase(0, VoxEditing);
+					TopData.setYBase(0, VoxEditing);
+					BottomData.setYBase(0, VoxEditing);
+
+					NorthData.setCulling(false, VoxEditing);
+					SouthData.setCulling(false, VoxEditing);
+					EastData.setCulling(false, VoxEditing);
+					WestData.setCulling(false, VoxEditing);
+					TopData.setCulling(false, VoxEditing);
+					BottomData.setCulling(false, VoxEditing);
+				}
+			}else if(previewBtn == e.getSource()){
+
+				JFrame pFrame = new JFrame("Model Preview");
+				pFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				pFrame.setResizable(false);
+
+				preview = new JTextArea(PrepareExport.prepareWriteData(XData, YData, ZData, NorthData, SouthData, WestData, EastData, TopData, BottomData, OptionData), 35, 80);
+				JScrollPane scrollpane = new JScrollPane(preview);
+				preview.setEditable(false);
+				preview.setTabSize(3 );
+				scrollpane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+				pFrame.add(scrollpane);
+
+				pFrame.pack();
+				pFrame.setVisible(true);
+			}else if(exportBtn == e.getSource()){
+				int option = popUp.showConfirmDialog(Panel.this, "I shouldnt be here! How did you press the Export button?","HEY!", JOptionPane.OK_CANCEL_OPTION, 2, icon);
 			}
 
-			if(Save==event.getSource()){
-
-				Writer w = new Writer();
-				Export ex = new Export();
-
-				ex.export(ao,VC, VC2,UVC0,UVC02,UVC1,UVC12,UVC2,UVC22,UVC3,UVC32,UVC4,UVC42,UVC5,UVC52,OSX,OSY,OSZ,KRot,Rend3D);
-				String contents = ex.export;
-				int acFc = fc.showSaveDialog(MyPanel.this);
-				if(acFc == fc.APPROVE_OPTION){
-
-					File otherFile = new File(fc.getSelectedFile().getPath()+".json");
-
-					File file = fc.getSelectedFile();
-					String filename=file.getPath();
-					if(w.getExtension(file)!=null){
-						System.out.println(w.getExtension(file));
-						int extPos = file.getPath().lastIndexOf(".");
-						if(extPos == -1) {
-							filename = file.getPath();
-						}
-						else {
-							filename = file.getPath().substring(0, extPos);
-						}
-					}
-					File anotherFile=new File(filename+".json");
-
-					if(fc.getSelectedFile().exists()||otherFile.exists()||anotherFile.exists()){
-
-						int opt = er.showConfirmDialog(MyPanel.this, "This file already exists. Saving it will overwrite it.\nAre you sure you want to save it?","Warning!",JOptionPane.WARNING_MESSAGE);
-
-						if(opt==0){
-							w.Write(fc.getSelectedFile(), contents);
-							er.showMessageDialog(MyPanel.this, "Succesfully saved!","Success",JOptionPane.INFORMATION_MESSAGE);
-						}
-					}else{
-						w.Write(fc.getSelectedFile(), contents);
-						er.showMessageDialog(MyPanel.this, "Succesfully saved!","Success",JOptionPane.INFORMATION_MESSAGE);
-					}
-				}
-			}
-
-			if(Open==event.getSource()){
-				Writer w = new Writer();
-
-				fc.setAcceptAllFileFilterUsed(false);
-
-				int acFc = fc.showOpenDialog(MyPanel.this);
-				if(acFc == fc.APPROVE_OPTION){
-					System.out.println(fc.getSelectedFile());
-					Import i = new Import();
-					int opt = er.showConfirmDialog(MyPanel.this, "Are you sure you want to open this file?\nYour current progress will be lost","Warning!",JOptionPane.WARNING_MESSAGE);
-					if(opt==0){
-						try {
-
-							ao=i.getAO(fc.getSelectedFile());
-							OSX=i.getOSX(fc.getSelectedFile());
-							OSY=i.getOSY(fc.getSelectedFile());
-							OSZ=i.getOSZ(fc.getSelectedFile());
-							KRot=i.getKRot(fc.getSelectedFile());
-							Rend3D=i.getRend3D(fc.getSelectedFile());
-
-							VC=i.getVC(fc.getSelectedFile());
-							VC2=i.getVC2(fc.getSelectedFile());
-
-							er.showMessageDialog(MyPanel.this, "This file seems to have opened correctly!","Success",JOptionPane.INFORMATION_MESSAGE);
-
-						} catch (IOException e) {
-							e.printStackTrace();
-							er.showMessageDialog(MyPanel.this, "Load corrupted\nIOException:"+e,"Error",JOptionPane.ERROR_MESSAGE);
-						} catch (ParseException e) {
-							e.printStackTrace();
-							er.showMessageDialog(MyPanel.this, "Load corrupted\nParseException:"+e,"Error",JOptionPane.ERROR_MESSAGE);
-						}
-					}
-				}
-			}
-
-			if(Reset==event.getSource()){
-				VC[sn*3]=0;
-				VC[sn*3+1]=0;
-				VC[sn*3+2]=0;
-				VC2[sn*3]=0;
-				VC2[sn*3+1]=0;
-				VC2[sn*3+2]=0;
-			}
-		}
-
-		public void mouseClicked(MouseEvent event) {
-			System.out.println(event.getX() + ":"+event.getY());
-
-			if(event.getX()>=10 && event.getX()<= 110 && event.getY()>=255 && event.getY() <= 265){
-				if(ao==true){
-					ao=false;
-				}
-				else if(ao==false){
-					ao=true;
-				}
-			}
-
-			if(event.getX()>=20 && event.getX()<= 65 && event.getY()>=285 && event.getY() <= 295){
-				if(OSX==true){
-					OSX=false;
-				}
-				else if(OSX==false){
-					OSX=true;
-				}
-			}
-			if(event.getX()>=20 && event.getX()<= 65 && event.getY()>=300 && event.getY() <= 315){
-				if(OSY==true){
-					OSY=false;
-				}
-				else if(OSY==false){
-					OSY=true;
-				}
-			}
-			if(event.getX()>=20 && event.getX()<= 65 && event.getY()>=315 && event.getY() <= 330){
-				if(OSZ==true){
-					OSZ=false;
-				}
-				else if(OSZ==false){
-					OSZ=true;
-				}
-			}
-			if(event.getX()>=10 && event.getX()<= 175 && event.getY()>=330 && event.getY() <= 344){
-				if(KRot==true){
-					KRot=false;
-				}
-				else if(KRot==false){
-					KRot=true;
-				}
-			}
-			if(event.getX()>=10 && event.getX()<= 170 && event.getY()>=345 && event.getY() <= 355){
-				if(Rend3D==true){
-					Rend3D=false;
-				}
-				else if(Rend3D==false){
-					Rend3D=true;
-				}
-			}
-		}
-
-		public void mouseEntered(MouseEvent event) {
-		}
-
-		public void mouseExited(MouseEvent event) {
-		}
-
-		public void mousePressed(MouseEvent event) {
-			if(m==0){
-				if(event.getX()>=306&&event.getX()<=544&&event.getY()>=36&&event.getY()<=274){
-					VC[sn*3]=(event.getX()-355)/10;
-					VC[sn*3+2]=(event.getY()-85)/10;
-				}
-				if(event.getX()>=306&&event.getX()<=545&&event.getY()>=286 && event.getY()<=528){
-					VC[sn*3]=(event.getX()-355)/10;
-					VC[sn*3+1]=(event.getY()-330)/10;
-				}
-				if(event.getX()>=556 && event.getX()<=795 && event.getY()>=286 && event.getY()<=528){
-					VC[sn*3+2]=(event.getX()-605)/10;
-					VC[sn*3+1]=(event.getY()-330)/10;
-				}
-			}else{
-				if(event.getX()>=306 && event.getX()<=304+16*21 && event.getY()>=36 && event.getY()<=34+16*21){
-					if(edUV==1){
-						UVC0[sn*2]=(event.getX()-305)/20;
-						UVC0[sn*2+1]=(event.getY()-35)/20;
-					}else if(edUV==2){
-						UVC1[sn*2]=(event.getX()-305)/20;
-						UVC1[sn*2+1]=(event.getY()-35)/20;
-					}else if(edUV==3){
-						UVC2[sn*2]=(event.getX()-305)/20;
-						UVC2[sn*2+1]=(event.getY()-35)/20;
-					}else if(edUV==4){
-						UVC3[sn*2]=(event.getX()-305)/20;
-						UVC3[sn*2+1]=(event.getY()-35)/20;
-					}else if(edUV==5){
-						UVC4[sn*2]=(event.getX()-305)/20;
-						UVC4[sn*2+1]=(event.getY()-35)/20;
-					}else if(edUV==6){
-						UVC5[sn*2]=(event.getX()-305)/20;
-						UVC5[sn*2+1]=(event.getY()-35)/20;
-					}
-				}
-
-				if(event.getX()>=800 && event.getX()<=975 && event.getY()>=60 && event.getY()<=75){
-					edUV=1;
-				}else if(event.getX()>=800 && event.getX()<=975 && event.getY()>=75 && event.getY()<=90){
-					edUV=2;
-				}else if(event.getX()>=800 && event.getX()<=975 && event.getY()>=90 && event.getY()<=105){
-					edUV=3;
-				}else if(event.getX()>=800 && event.getX()<=975 && event.getY()>=105 && event.getY()<=120){
-					edUV=4;
-				}else if(event.getX()>=800 && event.getX()<=975 && event.getY()>=120 && event.getY()<=135){
-					edUV=5;
-				}else if(event.getX()>=800 && event.getX()<=975 && event.getY()>=135 && event.getY()<=150){
-					edUV=6;
-				}
-			}
-		}
-
-		public void mouseReleased(MouseEvent event) {
-		}
-
-		public void mouseDragged(MouseEvent event) {	
-			if(m==0){
-				if(event.getX()>=305&&event.getX()<=544&&event.getY()>=35&&event.getY()<=274){
-					VC2[sn*3]=(event.getX()-335)/10;
-					VC2[sn*3+2]=(event.getY()-65)/10;
-				}
-
-				if(event.getX()>=305 && event.getX()<=544 && event.getY()>=288 && event.getY()<=528){
-					VC2[sn*3]=(event.getX()-335)/10;
-					VC2[sn*3+1]=(event.getY()-315)/10;
-				}
-				if(event.getX()>=555 && event.getX()<=795 && event.getY()>=288 && event.getY()<=528){
-					VC2[sn*3+2]=(event.getX()-585)/10;
-					VC2[sn*3+1]=(event.getY()-325)/10;
-				}
-			}else{
-				if(event.getX()>=306 && event.getX()<=304+16*21 && event.getY()>=36 && event.getY()<=34+16*21){
-					if(edUV==1){
-						UVC02[sn*2]=(event.getX()-305)/20;
-						UVC02[sn*2+1]=(event.getY()-35)/20;}
-					else if(edUV==2){
-						UVC12[sn*2]=(event.getX()-305)/20;
-						UVC12[sn*2+1]=(event.getY()-35)/20;
-					}else if(edUV==3){
-						UVC22[sn*2]=(event.getX()-305)/20;
-						UVC22[sn*2+1]=(event.getY()-35)/20;
-					}else if(edUV==4){
-						UVC32[sn*2]=(event.getX()-305)/20;
-						UVC32[sn*2+1]=(event.getY()-35)/20;
-					}else if(edUV==5){
-						UVC42[sn*2]=(event.getX()-305)/20;
-						UVC42[sn*2+1]=(event.getY()-35)/20;
-					}else if(edUV==6){
-						UVC52[sn*2]=(event.getX()-305)/20;
-						UVC52[sn*2+1]=(event.getY()-35)/20;
-					}
-				}
-			}
-		}
-
-		public void mouseMoved(MouseEvent event) {
 		}
 	}
 }

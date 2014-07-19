@@ -5,6 +5,7 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -14,20 +15,28 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.File;
 import java.net.*;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
+import au.com.AidoP.Display.Window;
 import au.com.AidoP.Export.Prepare;
+import au.com.AidoP.Export.Writer;
 import au.com.AidoP.UV.Back;
 import au.com.AidoP.UV.Bottom;
 import au.com.AidoP.UV.Front;
@@ -38,6 +47,7 @@ import au.com.AidoP.Voxels.X;
 import au.com.AidoP.Voxels.Y;
 import au.com.AidoP.Voxels.Z;
 import au.com.AidoP.Other.OptionData;
+import com.apple.eawt.*;
 
 public class Screen{
 
@@ -98,10 +108,24 @@ class Panel extends JPanel{
 	//End init of Voxels and UV Data--
 
 	//Initialise Other Values--
+	int redValueTop = 0;
+	int greenValueTop = 255;
+	int blueValueTop = 0;
 
-	ImageIcon icon = new ImageIcon(getClass().getResource("/res/Icon.png"));
+	int redValueBottom = 255;
+	int greenValueBottom = 255;
+	int blueValueBottom = 0;
+
+	String Framerate = "Unlimited"; 
+
+	long lastLoopTime = System.nanoTime();
+	final int TARGET_FPS = 60;
+	final long OPTIMAL_TIME = 1000000000 / TARGET_FPS;   
+	int fps;
+	int lastFpsTime;
 
 	Prepare PrepareExport = new Prepare();
+	Writer writer = new Writer();
 
 	boolean DevMode = false;
 
@@ -122,6 +146,8 @@ class Panel extends JPanel{
 	int Mode = VOXEL;
 
 	String listOptions[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99" };
+	String framerateOptions[] = { "Unlimited", "Limited" };
+
 
 	//End init Other Values--
 
@@ -132,20 +158,39 @@ class Panel extends JPanel{
 	JButton resetBtn;
 	JButton previewBtn;
 	JButton exportBtn;
+	JButton View3DBtn;
 
 	JComboBox swapVoxelBox;
+	JComboBox framerateOptionsBox;
+
+	JSlider redSliderTop;
+	JSlider greenSliderTop;
+	JSlider blueSliderTop;
+	JSlider redSliderBottom;
+	JSlider greenSliderBottom;
+	JSlider blueSliderBottom;
+
+	JFileChooser FileChooser;
 
 	JTextArea preview;
 	JOptionPane popUp;
+
+	FileNameExtensionFilter JSONFilter = new FileNameExtensionFilter("Json Files (*.json)", "json");
+	FileNameExtensionFilter PNGFilter = new FileNameExtensionFilter("PNG Image Files (*.png)", "png");
+	FileNameExtensionFilter RESPACKFilter = new FileNameExtensionFilter("Minecraft Resource Pack", "as");
 
 	//End init GUI Variables--
 
 
 	public Panel(){ //For GUI Initilisation.
 
+		FileChooser = new JFileChooser();
+		FileChooser.setAcceptAllFileFilterUsed(false);
+
+
 		exportBtn = new JButton("Export");
 		exportBtn.setToolTipText("Export your model to a JSON File.");
-		//add(exportBtn);
+		add(exportBtn);
 
 		previewBtn = new JButton("Raw Preview");
 		previewBtn.setToolTipText("Shows a raw JSON file view of your current model, ready to export.");
@@ -163,12 +208,17 @@ class Panel extends JPanel{
 		swapVoxelBox.setToolTipText("Selects the Voxel set to edit");
 		add(swapVoxelBox);
 
+		View3DBtn = new JButton("3D Preview");
+		View3DBtn.setToolTipText("Open the 3D Viewer");
+		add(View3DBtn);
+
 		//Event Handling
 		EventHandler h = new EventHandler();
 		swapEditorBtn.addActionListener(h);
 		resetBtn.addActionListener(h);
 		previewBtn.addActionListener(h);
 		exportBtn.addActionListener(h);
+		View3DBtn.addActionListener(h);
 
 		swapVoxelBox.addItemListener(new ItemListener(){
 			public void itemStateChanged(ItemEvent e){
@@ -259,7 +309,7 @@ class Panel extends JPanel{
 		g.drawString("Change particle texture", 5, 310);
 
 		g.drawString("For help click here or visit http://mcmodelmaker.weebly.com", 373, 555);
-
+		g.drawString("Click here to change your settings.", 445, 575);
 
 		if(Mode == VOXEL){
 			g.setColor(Color.BLUE);
@@ -270,17 +320,19 @@ class Panel extends JPanel{
 
 			g.drawImage(VoxBGrid, 0, 0, null);
 
+			//System.out.println("PAINTING");
+
 			//Draw cube faces
 
 			if(VoxEditing >= 1){
-				g.setColor(Color.YELLOW);
+				g.setColor(new Color(redValueBottom, greenValueBottom, blueValueBottom));
 				g.fillRect(XData.getOrigin(VoxEditing-1) * 10 + 341, ZData.getOrigin(VoxEditing-1) * 10 + 75,  (XData.getBase(VoxEditing-1) * 10 + 341) - (XData.getOrigin(VoxEditing-1) * 10 + 341), (ZData.getBase(VoxEditing-1) * 10 + 341) - (ZData.getOrigin(VoxEditing-1) * 10 + 341));
 				g.fillRect(XData.getOrigin(VoxEditing-1) * 10 + 341, YData.getOrigin(VoxEditing-1) * 10 + 334,  (XData.getBase(VoxEditing-1) * 10 + 341) - (XData.getOrigin(VoxEditing-1) * 10 + 341), (YData.getBase(VoxEditing-1) * 10 + 341) - (YData.getOrigin(VoxEditing-1) * 10 + 341));
 				g.fillRect(ZData.getOrigin(VoxEditing-1) * 10 + 601, YData.getOrigin(VoxEditing-1) * 10 + 334,  (ZData.getBase(VoxEditing-1) * 10 + 341) - (ZData.getOrigin(VoxEditing-1) * 10 + 341), (YData.getBase(VoxEditing-1) * 10 + 601) - (YData.getOrigin(VoxEditing-1) * 10 + 601));
 
 			}
 
-			g.setColor(Color.GREEN);
+			g.setColor(new Color(redValueTop, greenValueTop, blueValueTop));
 			g.fillRect(XData.getOrigin(VoxEditing) * 10 + 341, ZData.getOrigin(VoxEditing) * 10 + 75,  (XData.getBase(VoxEditing) * 10 + 341) - (XData.getOrigin(VoxEditing) * 10 + 341), (ZData.getBase(VoxEditing) * 10 + 341) - (ZData.getOrigin(VoxEditing) * 10 + 341));
 			g.fillRect(XData.getOrigin(VoxEditing) * 10 + 341, YData.getOrigin(VoxEditing) * 10 + 334,  (XData.getBase(VoxEditing) * 10 + 341) - (XData.getOrigin(VoxEditing) * 10 + 341), (YData.getBase(VoxEditing) * 10 + 341) - (YData.getOrigin(VoxEditing) * 10 + 341));
 			g.fillRect(ZData.getOrigin(VoxEditing) * 10 + 601, YData.getOrigin(VoxEditing) * 10 + 334,  (ZData.getBase(VoxEditing) * 10 + 341) - (ZData.getOrigin(VoxEditing) * 10 + 341), (YData.getBase(VoxEditing) * 10 + 601) - (YData.getOrigin(VoxEditing) * 10 + 601));
@@ -294,15 +346,27 @@ class Panel extends JPanel{
 			g.setColor(Color.BLACK);
 			g.drawString("Add Comment", 810, 95);
 
+			if(XData.getForceExport(VoxEditing)) g.setColor(Color.GRAY);
+			else g.setColor(Color.BLACK);
+			g.drawString("Force-Voxel", 810, 125);
+
 		}else if(Mode == UV){
 			g.setColor(Color.BLUE);
 			g.drawString("UV Editor", 5, 20);
 
-			Image UVBG = toolkit.getImage("/BackgroundForMCMM.png");//Draw Background
+			Image UVBG = null;
+
+			if(FaceEditing == NORTH) UVBG = toolkit.getImage(NorthData.getImagePath());
+			else if(FaceEditing == SOUTH) UVBG = toolkit.getImage(SouthData.getImagePath());
+			else if(FaceEditing == EAST) UVBG = toolkit.getImage(EastData.getImagePath());
+			else if(FaceEditing == WEST) UVBG = toolkit.getImage(WestData.getImagePath());
+			else if(FaceEditing == TOP) UVBG = toolkit.getImage(TopData.getImagePath());
+			else if(FaceEditing == BOTTOM) UVBG = toolkit.getImage(BottomData.getImagePath());
+
 			if(UVBG != null && UVBG.getWidth(null) == 16 && UVBG.getHeight(null) == 16) g.drawImage(UVBG, 301, 36, 320, 320, null);
 
 
-			g.setColor(Color.GREEN);
+			g.setColor(new Color(redValueTop, greenValueTop, blueValueTop));
 			if(FaceEditing == NORTH) g.fillRect(NorthData.getXOrigin(VoxEditing) * 20 + 301, NorthData.getYOrigin(VoxEditing) * 20 + 36,  (NorthData.getXBase(VoxEditing) * 20 + 281) - (NorthData.getXOrigin(VoxEditing) * 20 + 281), (NorthData.getYBase(VoxEditing) * 20 + 281) - (NorthData.getYOrigin(VoxEditing) * 20 + 281));
 			else if(FaceEditing == SOUTH) g.fillRect(SouthData.getXOrigin(VoxEditing) * 20 + 301, SouthData.getYOrigin(VoxEditing) * 20 + 36,  (SouthData.getXBase(VoxEditing) * 20 + 281) - (SouthData.getXOrigin(VoxEditing) * 20 + 281), (SouthData.getYBase(VoxEditing) * 20 + 281) - (SouthData.getYOrigin(VoxEditing) * 20 + 281));
 			else if(FaceEditing == EAST) g.fillRect(EastData.getXOrigin(VoxEditing) * 20 + 301, EastData.getYOrigin(VoxEditing) * 20 + 36,  (EastData.getXBase(VoxEditing) * 20 + 281) - (EastData.getXOrigin(VoxEditing) * 20 + 281), (EastData.getYBase(VoxEditing) * 20 + 281) - (EastData.getYOrigin(VoxEditing) * 20 + 281));
@@ -381,6 +445,24 @@ class Panel extends JPanel{
 			g.drawString(mouseX + ", " + mouseY, mouseX, mouseY-5);
 		}
 
+		if(Framerate == "Limited"){
+
+			try{Thread.sleep(1000/60);}
+			catch(Exception e){}
+
+			long now = System.nanoTime();
+			long updateLength = now - lastLoopTime;
+			lastLoopTime = now;
+			lastFpsTime += updateLength;
+			fps++;
+			if (lastFpsTime >= 1000000000)
+			{
+				System.out.println("(FPS: "+fps+")");
+				lastFpsTime = 0;
+				fps = 0;
+			}
+		}
+
 		repaint();
 	}
 
@@ -390,7 +472,7 @@ class Panel extends JPanel{
 
 		public void mouseMoved(MouseEvent e) {mouseX = e.getX(); mouseY = e.getY();}
 
-		public void mouseClicked(MouseEvent e) {
+		public void mousePressed(MouseEvent e) {
 
 			if(e.getX() >= 371 && e.getY() >= 545 && e.getX() <= 752 && e.getY() <= 560){
 				try 
@@ -398,6 +480,139 @@ class Panel extends JPanel{
 					Desktop.getDesktop().browse(new URL("http://mcmodelmaker.weebly.com").toURI());
 				}           
 				catch (Exception ex) {}
+			}
+			if(e.getX() >= 445 && e.getY() >= 565 && e.getX() <= 665 && e.getY() <= 580){
+				JFrame opFrame = new JFrame("MC Model Maker - Settings");
+				opFrame.setAlwaysOnTop(true);
+				opFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				opFrame.setVisible(true);
+
+				opFrame.setLayout(new GridLayout(0,2));
+
+				JLabel framerateLabel = new JLabel("Framerate:");
+				opFrame.add(framerateLabel);
+				framerateOptionsBox = new JComboBox(framerateOptions);
+				framerateOptionsBox.setToolTipText("The framerate you want MC Model Maker to run at.");
+				if(Framerate == "Limited")framerateOptionsBox.setSelectedIndex(1);
+				else framerateOptionsBox.setSelectedIndex(0);
+				framerateOptionsBox.addActionListener(new ActionListener(){
+					public void actionPerformed(ActionEvent e) {
+						Framerate = framerateOptionsBox.getSelectedItem().toString();
+
+					}
+				});
+				opFrame.add(framerateOptionsBox);
+
+				JLabel blankLabel = new JLabel("");
+				opFrame.add(blankLabel);
+				JLabel coloursLabel = new JLabel("Colours:");
+				opFrame.add(coloursLabel);
+
+
+				JLabel topRedLabel = new JLabel("Red Value of Editing Colour:");
+				opFrame.add(topRedLabel);
+
+				redSliderTop = new JSlider(0, 255, redValueTop);
+				redSliderTop.setToolTipText("Red value of the editing coulour.");
+				redSliderTop.setPreferredSize(new Dimension(500, 45));
+				redSliderTop.setMajorTickSpacing(15);
+				redSliderTop.setMinorTickSpacing(5);
+				redSliderTop.setPaintTicks(true);
+				redSliderTop.setPaintLabels(true);
+				redSliderTop.addChangeListener(new ChangeListener(){
+					public void stateChanged(ChangeEvent e) {
+						redValueTop = redSliderTop.getValue();
+					}
+				});
+				opFrame.add(redSliderTop);
+
+				JLabel topGreenLabel = new JLabel("Green Value of Editing Colour:");
+				opFrame.add(topGreenLabel);
+
+				greenSliderTop = new JSlider(0, 255, greenValueTop);
+				greenSliderTop.setToolTipText("Green value of the editing coulour.");
+				greenSliderTop.setPreferredSize(new Dimension(500, 45));
+				greenSliderTop.setMajorTickSpacing(15);
+				greenSliderTop.setMinorTickSpacing(5);
+				greenSliderTop.setPaintTicks(true);
+				greenSliderTop.setPaintLabels(true);
+				greenSliderTop.addChangeListener(new ChangeListener(){
+					public void stateChanged(ChangeEvent e) {
+						greenValueTop = greenSliderTop.getValue();
+					}
+				});
+				opFrame.add(greenSliderTop);
+
+				JLabel topBlueLabel = new JLabel("Blue Value of Editing Colour:");
+				opFrame.add(topBlueLabel);
+
+				blueSliderTop = new JSlider(0, 255, blueValueTop);
+				blueSliderTop.setToolTipText("Blue value of the editing coulour.");
+				blueSliderTop.setPreferredSize(new Dimension(500, 45));
+				blueSliderTop.setMajorTickSpacing(15);
+				blueSliderTop.setMinorTickSpacing(5);
+				blueSliderTop.setPaintTicks(true);
+				blueSliderTop.setPaintLabels(true);
+				blueSliderTop.addChangeListener(new ChangeListener(){
+					public void stateChanged(ChangeEvent e) {
+						blueValueTop = blueSliderTop.getValue();
+					}
+				});
+				opFrame.add(blueSliderTop);
+
+				JLabel botRedLabel = new JLabel("Red Value of Background Voxel Colour:");
+				opFrame.add(botRedLabel);
+
+				redSliderBottom = new JSlider(0, 255, redValueBottom);
+				redSliderBottom.setToolTipText("Red value of the background voxel coulour.");
+				redSliderBottom.setPreferredSize(new Dimension(500, 45));
+				redSliderBottom.setMajorTickSpacing(15);
+				redSliderBottom.setMinorTickSpacing(5);
+				redSliderBottom.setPaintTicks(true);
+				redSliderBottom.setPaintLabels(true);
+				redSliderBottom.addChangeListener(new ChangeListener(){
+					public void stateChanged(ChangeEvent e) {
+						redValueBottom = redSliderBottom.getValue();
+					}
+				});
+				opFrame.add(redSliderBottom);
+
+				JLabel botGreenLabel = new JLabel("Green Value of Background Voxel Colour:");
+				opFrame.add(botGreenLabel);
+
+				greenSliderBottom = new JSlider(0, 255, greenValueBottom);
+				greenSliderBottom.setToolTipText("Green value of the background voxel coulour.");
+				greenSliderBottom.setPreferredSize(new Dimension(500, 45));
+				greenSliderBottom.setMajorTickSpacing(15);
+				greenSliderBottom.setMinorTickSpacing(5);
+				greenSliderBottom.setPaintTicks(true);
+				greenSliderBottom.setPaintLabels(true);
+				greenSliderBottom.addChangeListener(new ChangeListener(){
+					public void stateChanged(ChangeEvent e) {
+						greenValueBottom = greenSliderBottom.getValue();
+					}
+				});
+				opFrame.add(greenSliderBottom);
+
+				JLabel botBlueLabel = new JLabel("Blue Value of Background Voxel Colour:");
+				opFrame.add(botBlueLabel);
+
+				blueSliderBottom = new JSlider(0, 255, blueValueBottom);
+				blueSliderBottom.setToolTipText("Blue value of the background voxel coulour.");
+				blueSliderBottom.setPreferredSize(new Dimension(500, 45));
+				blueSliderBottom.setMajorTickSpacing(15);
+				blueSliderBottom.setMinorTickSpacing(5);
+				blueSliderBottom.setPaintTicks(true);
+				blueSliderBottom.setPaintLabels(true);
+				blueSliderBottom.addChangeListener(new ChangeListener(){
+					public void stateChanged(ChangeEvent e) {
+						blueValueBottom = blueSliderBottom.getValue();
+					}
+				});
+				opFrame.add(blueSliderBottom);
+
+
+				opFrame.pack();
 			}
 
 			if(e.getX() >= 5 && e.getY() >= 225 && e.getX() <= 122 && e.getY() <= 240) OptionData.setAmbientOcc(!OptionData.getAmbientOcc());
@@ -523,6 +738,10 @@ class Panel extends JPanel{
 				if(e.getX() >= 801 && e.getX() <= 910 && e.getY() >= 35 && e.getY() <= 97){
 					String comment = popUp.showInputDialog(Panel.this, "Please input the comment to display for Voxel " + VoxEditing + ".\nLeave blank to remove the comment", XData.getComment(VoxEditing));
 					if(comment != null) XData.setComment(comment, VoxEditing);
+				}
+
+				if(e.getX() >= 812 && e.getX() <= 886 && e.getY() >= 117 && e.getY() <= 126){
+					XData.setForceExport(!XData.getForceExport(VoxEditing), VoxEditing);
 				}
 			}else if(Mode == UV){
 
@@ -655,6 +874,32 @@ class Panel extends JPanel{
 							BottomData.setTexture(texpath);
 						}
 					}
+
+					FileChooser.addChoosableFileFilter(PNGFilter);
+
+					int suc = FileChooser.showOpenDialog(Panel.this);
+					if(suc == 0){
+						if(FileChooser.getSelectedFile() != null){
+							if(FaceEditing == NORTH){
+								NorthData.setImagePath(FileChooser.getSelectedFile().getPath());
+							}else if(FaceEditing == SOUTH){
+								SouthData.setImagePath(FileChooser.getSelectedFile().getPath());
+							}else if(FaceEditing == WEST){
+								WestData.setImagePath(FileChooser.getSelectedFile().getPath());
+							}else if(FaceEditing == EAST){
+								EastData.setImagePath(FileChooser.getSelectedFile().getPath());
+							}else if(FaceEditing == TOP){
+								TopData.setImagePath(FileChooser.getSelectedFile().getPath());
+							}else if(FaceEditing == BOTTOM){
+								BottomData.setImagePath(FileChooser.getSelectedFile().getPath());
+							}
+						}
+					}else{
+
+					}
+
+					FileChooser.removeChoosableFileFilter(PNGFilter);
+
 				}
 
 				if(e.getX() >= 801 && e.getX() <= 901 && e.getY() >= 149 && e.getY() <= 249){
@@ -684,7 +929,7 @@ class Panel extends JPanel{
 
 		}
 
-		public void mousePressed(MouseEvent e) {}
+		public void mouseClicked(MouseEvent e) {}
 
 		public void mouseReleased(MouseEvent e) {}
 
@@ -700,6 +945,28 @@ class Panel extends JPanel{
 				}else{
 					Mode = VOXEL;
 				}
+			}else if(View3DBtn == e.getSource()){
+
+				String[] exportOptions = {"Large", "Small"};
+
+				int zoomSize = popUp.showOptionDialog(Panel.this, "How big is your model?", "Attention!", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, exportOptions, "Large");
+
+				float zoom = 0.0f;
+
+				switch(zoomSize){
+				case 0: zoom = 10.0f;
+				break;
+				case 1: zoom = 1.0f;
+				break;
+				}
+
+				int sure = 0;
+				if(System.getProperty("os.name").equals("Mac OS X")) sure = popUp.showConfirmDialog(Panel.this, "You are running on Mac OSX. The 3D Viewer is known to crash on this system, causing lost data.\nWould you still like to continue?");
+				if(sure == 0){
+				Window viewer = new Window();
+				viewer.run(XData, YData, ZData, zoom);
+				}
+
 			}else if(resetBtn == e.getSource()){
 				if(VoxEditing == 0){
 					XData.setOrigin(0, 0);
@@ -789,7 +1056,7 @@ class Panel extends JPanel{
 
 				JFrame pFrame = new JFrame("Model Preview");
 				pFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				pFrame.setResizable(false);
+				pFrame.setResizable(true);
 
 				preview = new JTextArea(PrepareExport.prepareWriteData(XData, YData, ZData, NorthData, SouthData, WestData, EastData, TopData, BottomData, OptionData), 35, 80);
 				JScrollPane scrollpane = new JScrollPane(preview);
@@ -802,9 +1069,93 @@ class Panel extends JPanel{
 				pFrame.pack();
 				pFrame.setVisible(true);
 			}else if(exportBtn == e.getSource()){
-				int option = popUp.showConfirmDialog(Panel.this, "I shouldnt be here! How did you press the Export button?","HEY!", JOptionPane.OK_CANCEL_OPTION, 2, icon);
-			}
 
+				String[] exportOptions = {"JSON File", "Resource Pack - Item", "Resource Pack - Block"};
+
+				int exportType = popUp.showOptionDialog(Panel.this, "What would you like to export your model as?", "Attention!", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, exportOptions, "Resource Pack - Block");
+
+				if(exportType == 1){ //Respack - Item
+
+					FileChooser.setAcceptAllFileFilterUsed(true);
+					int suc = FileChooser.showSaveDialog(Panel.this);
+					FileChooser.setAcceptAllFileFilterUsed(false);
+
+					if(suc == 0)
+						if(writer.getExtension(FileChooser.getSelectedFile()) == null){
+							writer.createResPackDir(FileChooser.getSelectedFile());
+
+							String packDescription = (String)popUp.showInputDialog(Panel.this, "Please input the description of the resource pack!", "Sorry to disturb you!", JOptionPane.QUESTION_MESSAGE, null, null, OptionData.getPackDescription());
+							String mcmetaData = "{\n\t\"pack\": {\n\t\t\"pack_format\": 1,\n\t\t\"description\": \""+ packDescription + "\"\n\t}\n}";
+							File mcmetaFile = new File(FileChooser.getSelectedFile().getPath() + "/" + "pack.mcmeta");
+							writer.createFile(mcmetaFile);
+							writer.writeFile(mcmetaData, mcmetaFile);
+
+							OptionData.setPackDescription(packDescription);
+
+							String getNameSuc = (String)popUp.showInputDialog(Panel.this, "Please input the name of the item that your model is changing!", "One last thing!", JOptionPane.QUESTION_MESSAGE, null, null, OptionData.getBlockEditing());
+							OptionData.setBlockEditing(getNameSuc);
+
+							if(getNameSuc != null && getNameSuc != ""){
+
+								File blockFile = new File(FileChooser.getSelectedFile().getPath() + "/assets/minecraft/models/item/" + getNameSuc);
+								if(writer.getExtension(blockFile) == null || !writer.getExtension(blockFile).equalsIgnoreCase("json")) blockFile = new File(FileChooser.getSelectedFile().getPath() + "/assets/minecraft/models/item//" + getNameSuc + ".json");
+
+								writer.createFile(blockFile);
+								writer.writeFile(PrepareExport.prepareWriteData(XData, YData, ZData, NorthData, SouthData, WestData, EastData, TopData, BottomData, OptionData), blockFile);
+							}
+						}else{
+							popUp.showMessageDialog(Panel.this, "Invalid extension for a Resource Pack!\nResource Packs do not need an extension!", "Attention!", 0);
+						}
+				}
+
+				else if(exportType == 2){//Respack - Block
+
+					FileChooser.setAcceptAllFileFilterUsed(true);
+					int suc = FileChooser.showSaveDialog(Panel.this);
+					FileChooser.setAcceptAllFileFilterUsed(false);
+
+					if(suc == 0)
+						if(writer.getExtension(FileChooser.getSelectedFile()) == null){
+							writer.createResPackDir(FileChooser.getSelectedFile());
+
+							String packDescription = (String)popUp.showInputDialog(Panel.this, "Please input the description of the resource pack!", "Sorry to disturb you!", JOptionPane.QUESTION_MESSAGE, null, null, OptionData.getPackDescription());
+							String mcmetaData = "{\n\t\"pack\": {\n\t\t\"pack_format\": 1,\n\t\t\"description\": \""+ packDescription + "\"\n\t}\n}";
+							File mcmetaFile = new File(FileChooser.getSelectedFile().getPath() + "/" + "pack.mcmeta");
+							writer.createFile(mcmetaFile);
+							writer.writeFile(mcmetaData, mcmetaFile);
+
+							OptionData.setPackDescription(packDescription);
+
+							String getNameSuc = (String)popUp.showInputDialog(Panel.this, "Please input the name of the block that your model is changing!", "One last thing!", JOptionPane.QUESTION_MESSAGE, null, null, OptionData.getBlockEditing());
+							OptionData.setBlockEditing(getNameSuc);
+							if(getNameSuc != null && getNameSuc != ""){
+
+								File blockFile = new File(FileChooser.getSelectedFile().getPath() + "/assets/minecraft/models/block/" + getNameSuc);
+								if(writer.getExtension(blockFile) == null || !writer.getExtension(blockFile).equalsIgnoreCase("json")) blockFile = new File(FileChooser.getSelectedFile().getPath() + "/assets/minecraft/models/block/" + getNameSuc + ".json");
+
+								writer.createFile(blockFile);
+								writer.writeFile(PrepareExport.prepareWriteData(XData, YData, ZData, NorthData, SouthData, WestData, EastData, TopData, BottomData, OptionData), blockFile);
+							}
+						}else{
+							popUp.showMessageDialog(Panel.this, "Invalid extension for a Resource Pack!\nResource Packs do not need an extension!", "Attention!", 0);
+						}
+				}
+
+				else if(exportType == 0){//JSON Export
+
+					FileChooser.setAcceptAllFileFilterUsed(true);
+					int suc = FileChooser.showSaveDialog(Panel.this);
+					FileChooser.setAcceptAllFileFilterUsed(false);
+
+					if(suc == 0){
+						File blockFile = new File(FileChooser.getSelectedFile().getPath());
+						if(writer.getExtension(blockFile) == null || !writer.getExtension(blockFile).equalsIgnoreCase("json")) blockFile = new File(FileChooser.getSelectedFile().getPath() + ".json");
+
+						writer.createFile(blockFile);
+						writer.writeFile(PrepareExport.prepareWriteData(XData, YData, ZData, NorthData, SouthData, WestData, EastData, TopData, BottomData, OptionData), blockFile);
+					}
+				}
+			}
 		}
 	}
 }

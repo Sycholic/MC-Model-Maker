@@ -8,6 +8,8 @@ public class X {
 	
 	private String[] Comment = new String[100];
 	
+	private boolean[] ForceExport = new boolean[100];
+	
 	public int getOrigin(int Voxel){
 		return Origin[Voxel];
 	}
@@ -30,5 +32,13 @@ public class X {
 	
 	public void setComment(String Value, int Voxel){
 		Comment[Voxel] = Value;
+	}
+
+	public boolean getForceExport(int Voxel) {
+		return ForceExport[Voxel];
+	}
+	
+	public void setForceExport(boolean Value, int Voxel) {
+		ForceExport[Voxel] = Value;
 	}
 }

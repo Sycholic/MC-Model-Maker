@@ -6,6 +6,7 @@ public class Front {
 	private int[] Origin = new int[200];
 	private int[] Base = new int[200];
 	private String TexturePath = "blocks/crafting_table_front";
+	private String ImagePath = null;
 	private boolean[] cull = new boolean[100];
 	
 	public int getXOrigin(int Voxel){
@@ -46,6 +47,14 @@ public class Front {
 	
 	public void setTexture(String Path){
 		TexturePath = Path;
+	}
+	
+	public String getImagePath(){
+	return ImagePath;	
+	}
+	
+	public void setImagePath(String Path){
+		ImagePath = Path;
 	}
 	
 	public void setCulling(boolean Value, int Voxel){

@@ -3,6 +3,10 @@ package au.com.AidoP.Other;
 public class OptionData {
 	
 	private String particleTexture = "blocks/crafting_table_front";
+	private String ImagePath = null;
+	
+	private String packDesc = "A boring crafting table,\nmade with MC Model Maker!";
+	private String blockEditing = "crafting_table";
 	
 	private boolean OffX = false;
 	private boolean OffY = false;
@@ -15,6 +19,14 @@ public class OptionData {
 	
 	public void setParticleTexture(String Path){
 		particleTexture = Path;
+	}
+	
+	public String getImagePath(){
+		return ImagePath;
+	}
+	
+	public void setImagePath(String Path){
+		ImagePath = Path;
 	}
 	
 	public boolean getRandOffsetX(){
@@ -47,5 +59,21 @@ public class OptionData {
 	
 	public void setAmbientOcc(boolean Value){
 		ambientOcc = Value;
+	}
+	
+	public String getPackDescription(){
+		return packDesc;
+	}
+	
+	public void setPackDescription(String Value){
+		packDesc = Value;
+	}
+	
+	public String getBlockEditing(){
+		return blockEditing;
+	}
+	
+	public void setBlockEditing(String Value){
+		blockEditing = Value;
 	}
 }

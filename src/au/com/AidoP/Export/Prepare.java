@@ -35,7 +35,7 @@ public class Prepare {
 		export += "\t\"elements\": [\n";
 
 		for(int voxel=0; voxel <= 99; voxel++){
-			if(XData.getOrigin(voxel) != XData.getBase(voxel) && YData.getOrigin(voxel) != YData.getBase(voxel) && ZData.getOrigin(voxel) != ZData.getBase(voxel)){
+			if((XData.getOrigin(voxel) != XData.getBase(voxel) && YData.getOrigin(voxel) != YData.getBase(voxel) && ZData.getOrigin(voxel) != ZData.getBase(voxel)) || XData.getForceExport(voxel)){
 
 				YData.setOrigin(YData.getOrigin(voxel) * -1 + 16, voxel);
 				YData.setBase(YData.getBase(voxel) * -1 + 16, voxel);
@@ -51,12 +51,12 @@ public class Prepare {
 				export += "\t\t\t\"to\": [ " + XData.getBase(voxel) + ", " + YData.getBase(voxel) + ", " + ZData.getBase(voxel) + " ],\n";
 				if(XData.getComment(voxel) != null && XData.getComment(voxel).length() >= 1) export += "\t\t\t\"__comment\": \"" + XData.getComment(voxel) + "\",\n";
 				export += "\t\t\t\"faces\": {\n";
-				export += "\t\t\t\t\"north\": { \"uv\": [ " + NorthData.getXOrigin(voxel) + ", " + NorthData.getYOrigin(voxel) + ", " + NorthData.getXBase(voxel) + ", " + NorthData.getYBase(voxel) + " ], \"texture\": \"#north\", \"cull\": " + NorthData.getCulling(voxel) + " },\n";
-				export += "\t\t\t\t\"south\": { \"uv\": [ " + SouthData.getXOrigin(voxel) + ", " + SouthData.getYOrigin(voxel) + ", " + SouthData.getXBase(voxel) + ", " + SouthData.getYBase(voxel) + " ], \"texture\": \"#south\", \"cull\": " + SouthData.getCulling(voxel) + " },\n";
-				export += "\t\t\t\t\"east\": { \"uv\": [ " + EastData.getXOrigin(voxel) + ", " + EastData.getYOrigin(voxel) + ", " + EastData.getXBase(voxel) + ", " + EastData.getYBase(voxel) + " ], \"texture\": \"#east\", \"cull\": " + EastData.getCulling(voxel) + " },\n";
-				export += "\t\t\t\t\"west\": { \"uv\": [ " + WestData.getXOrigin(voxel) + ", " + WestData.getYOrigin(voxel) + ", " + WestData.getXBase(voxel) + ", " + WestData.getYBase(voxel) + " ], \"texture\": \"#west\", \"cull\": " + WestData.getCulling(voxel) + " },\n";
-				export += "\t\t\t\t\"up\": { \"uv\": [ " + TopData.getXOrigin(voxel) + ", " + TopData.getYOrigin(voxel) + ", " + TopData.getXBase(voxel) + ", " + TopData.getYBase(voxel) + " ], \"texture\": \"#up\", \"cull\": " + TopData.getCulling(voxel) + " },\n";
-				export += "\t\t\t\t\"down\": { \"uv\": [ " + BottomData.getXOrigin(voxel) + ", " + BottomData.getYOrigin(voxel) + ", " + BottomData.getXBase(voxel) + ", " + BottomData.getYBase(voxel) + " ], \"texture\": \"#down\", \"cull\": " + BottomData.getCulling(voxel) + " }\n";
+				export += "\t\t\t\t\"north\": { \"uv\": [ " + NorthData.getXOrigin(voxel) + ", " + NorthData.getYOrigin(voxel) + ", " + NorthData.getXBase(voxel) + ", " + NorthData.getYBase(voxel) + " ], \"texture\": \"#north\", \"cullface\": " + NorthData.getCulling(voxel) + " },\n";
+				export += "\t\t\t\t\"south\": { \"uv\": [ " + SouthData.getXOrigin(voxel) + ", " + SouthData.getYOrigin(voxel) + ", " + SouthData.getXBase(voxel) + ", " + SouthData.getYBase(voxel) + " ], \"texture\": \"#south\", \"cullface\": " + SouthData.getCulling(voxel) + " },\n";
+				export += "\t\t\t\t\"east\": { \"uv\": [ " + EastData.getXOrigin(voxel) + ", " + EastData.getYOrigin(voxel) + ", " + EastData.getXBase(voxel) + ", " + EastData.getYBase(voxel) + " ], \"texture\": \"#east\", \"cullface\": " + EastData.getCulling(voxel) + " },\n";
+				export += "\t\t\t\t\"west\": { \"uv\": [ " + WestData.getXOrigin(voxel) + ", " + WestData.getYOrigin(voxel) + ", " + WestData.getXBase(voxel) + ", " + WestData.getYBase(voxel) + " ], \"texture\": \"#west\", \"cullface\": " + WestData.getCulling(voxel) + " },\n";
+				export += "\t\t\t\t\"up\": { \"uv\": [ " + TopData.getXOrigin(voxel) + ", " + TopData.getYOrigin(voxel) + ", " + TopData.getXBase(voxel) + ", " + TopData.getYBase(voxel) + " ], \"texture\": \"#up\", \"cullface\": " + TopData.getCulling(voxel) + " },\n";
+				export += "\t\t\t\t\"down\": { \"uv\": [ " + BottomData.getXOrigin(voxel) + ", " + BottomData.getYOrigin(voxel) + ", " + BottomData.getXBase(voxel) + ", " + BottomData.getYBase(voxel) + " ], \"texture\": \"#down\", \"cullface\": " + BottomData.getCulling(voxel) + " }\n";
 				export += "\t\t\t}\n";
 				
 				YData.setOrigin(OYDato, voxel);
